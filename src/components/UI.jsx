@@ -114,6 +114,7 @@ export function Badge({ label, cat }) {
     arriendo:   { bg: '#FFFBEB', color: '#D97706' },
     aseo:       { bg: '#F0FDFA', color: '#14B8A6' },
     transporte: { bg: '#FDF2F8', color: '#EC4899' },
+    paseo:      { bg: '#FFF3EB', color: '#F97316' },
     otros:      { bg: '#F8FAFC', color: '#64748B' },
   }
   const c = catColors[cat] || catColors.otros
@@ -164,7 +165,7 @@ export function Avatar({ nombre, index }) {
 export const fmt = (n) => '$' + Math.round(n).toLocaleString('es-CO')
 
 export const CATEGORIAS = [
-  'mercado', 'servicios', 'internet', 'arriendo', 'aseo', 'transporte', 'otros'
+  'mercado', 'servicios', 'internet', 'arriendo', 'aseo', 'transporte', 'paseo', 'otros'
 ]
 
 export const CAT_CHART_COLORS = [
@@ -174,5 +175,6 @@ export const CAT_CHART_COLORS = [
   '#F59E0B',
   '#14B8A6',
   '#EC4899',
+  '#FB923C',
   '#94A3B8',
 ]

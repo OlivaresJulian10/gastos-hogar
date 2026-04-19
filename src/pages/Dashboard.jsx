@@ -42,6 +42,17 @@ export default function Dashboard() {
   const totalMes = gastosMes.reduce((s, g) => s + Number(g.monto), 0)
   const totalTotal = gastos.reduce((s, g) => s + Number(g.monto), 0)
 
+  const presupuesto = parseFloat(localStorage.getItem(`presupuesto_${mesActual}`) || '0')
+  const pctUsado = presupuesto > 0 ? Math.min((totalMes / presupuesto) * 100, 100) : 0
+  const pctRestante = presupuesto > 0 ? Math.max(((presupuesto - totalMes) / presupuesto) * 100, 0) : 0
+  const excedido = presupuesto > 0 && totalMes > presupuesto
+  const barColor = excedido ? '#F43F5E' : pctRestante > 50 ? '#14B8A6' : pctRestante > 25 ? '#F59E0B' : '#F43F5E'
+  const barLabel = excedido
+    ? `¡Excedido por ${fmt(totalMes - presupuesto)}!`
+    : pctRestante > 50 ? 'En buen camino ✦'
+    : pctRestante > 25 ? 'Ojo con el presupuesto'
+    : 'Presupuesto casi agotado'
+
   const porCategoria = CATEGORIAS.map(cat =>
     gastosMes.filter(g => g.categoria === cat).reduce((s, g) => s + Number(g.monto), 0)
   )
@@ -75,6 +86,61 @@ export default function Dashboard() {
         title="Dashboard"
         sub={`Mes actual: ${format(new Date(), 'MMMM yyyy', { locale: es })}`}
       />
+
+      {presupuesto > 0 && (
+        <div style={{
+          background: 'var(--surface)', border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-lg)', padding: '1.25rem 1.5rem',
+          marginBottom: '1.25rem', boxShadow: 'var(--shadow)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <div>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text3)', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                Presupuesto del mes
+              </span>
+              <div style={{ fontSize: 13, color: barColor, fontWeight: 700, marginTop: 3 }}>{barLabel}</div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <span style={{ fontSize: 20, fontWeight: 700, fontFamily: "'Playfair Display', serif", color: barColor }}>
+                {fmt(totalMes)}
+              </span>
+              <span style={{ fontSize: 13, color: 'var(--text3)', marginLeft: 6 }}>/ {fmt(presupuesto)}</span>
+            </div>
+          </div>
+          <div style={{ background: 'var(--surface2)', borderRadius: 99, height: 10, overflow: 'hidden' }}>
+            <div style={{
+              width: `${pctUsado}%`,
+              height: '100%',
+              borderRadius: 99,
+              background: excedido
+                ? '#F43F5E'
+                : pctRestante > 50
+                ? 'linear-gradient(90deg,#14B8A6,#6366F1)'
+                : pctRestante > 25
+                ? 'linear-gradient(90deg,#F59E0B,#FB923C)'
+                : 'linear-gradient(90deg,#F43F5E,#EC4899)',
+              transition: 'width 0.6s cubic-bezier(0.34,1.56,0.64,1)',
+            }} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+            <span style={{ fontSize: 11, color: 'var(--text3)' }}>{Math.round(pctUsado)}% usado</span>
+            <span style={{ fontSize: 11, color: excedido ? '#F43F5E' : 'var(--text3)' }}>
+              {excedido ? `Excedido ${fmt(totalMes - presupuesto)}` : `Disponible ${fmt(presupuesto - totalMes)}`}
+            </span>
+          </div>
+        </div>
+      )}
+      {presupuesto === 0 && (
+        <a href="/presupuesto" style={{
+          display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none',
+          background: 'var(--accent-bg)', border: '1px dashed var(--accent)',
+          borderRadius: 'var(--radius-lg)', padding: '0.875rem 1.25rem',
+          marginBottom: '1.25rem', color: 'var(--accent-text)', fontSize: 13, fontWeight: 600,
+        }}>
+          <span style={{ fontSize: 18 }}>◐</span>
+          Define un presupuesto para este mes y controla tus gastos →
+        </a>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(155px,1fr))', gap: 14, marginBottom: '1.75rem' }}>
         <MetricCard label="Total este mes" value={fmt(totalMes)} color="var(--accent)" accent="var(--grad-primary)" />

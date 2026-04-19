@@ -1,12 +1,13 @@
 import { NavLink } from 'react-router-dom'
 
 const navItems = [
-  { to: '/',            icon: '✦',  label: 'Dashboard' },
-  { to: '/registrar',   icon: '✎',  label: 'Registrar gasto' },
-  { to: '/historial',   icon: '≋',  label: 'Historial' },
-  { to: '/comparativo', icon: '◈',  label: 'Comparativos' },
-  { to: '/balance',     icon: '⇆',  label: 'Balance' },
-  { to: '/personas',    icon: '◉',  label: 'Personas' },
+  { to: '/',             icon: '✦',  label: 'Dashboard' },
+  { to: '/registrar',    icon: '✎',  label: 'Registrar gasto' },
+  { to: '/historial',    icon: '≋',  label: 'Historial' },
+  { to: '/comparativo',  icon: '◈',  label: 'Comparativos' },
+  { to: '/balance',      icon: '⇆',  label: 'Balance' },
+  { to: '/presupuesto',  icon: '◐',  label: 'Presupuesto' },
+  { to: '/personas',     icon: '◉',  label: 'Personas' },
 ]
 
 export default function Layout({ children }) {
