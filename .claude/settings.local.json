@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(cmd.exe /c \"cd \\\\\"c:\\\\Users\\\\Usuario\\\\Documents\\\\Gastos_casa\\\\\" && npm install\")",
+      "Bash(cmd.exe /c \"npm install\")",
+      "Bash(cmd.exe /c \"npm --version\")",
+      "Bash(powershell.exe -Command \"cd 'c:\\\\Users\\\\Usuario\\\\Documents\\\\Gastos_casa'; npm install\")",
+      "Bash(powershell.exe -Command \"cd 'c:\\\\Users\\\\Usuario\\\\Documents\\\\Gastos_casa'; & 'C:\\\\Program Files\\\\nodejs\\\\npm.cmd' install\")",
+      "Bash(powershell.exe -Command \"cd 'c:\\\\Users\\\\Usuario\\\\Documents\\\\Gastos_casa'; & 'C:\\\\Program Files\\\\nodejs\\\\npm.cmd' run dev\")",
+      "Bash(powershell.exe -Command \"Get-Process -Name node -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host 'Servidor detenido'\")",
+      "Bash(powershell.exe -Command \"Get-Process -Name node -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host 'Detenido'\")",
+      "Bash(powershell.exe -Command ' *)",
+      "Bash(powershell.exe -Command \"cd 'c:\\\\Users\\\\Usuario\\\\Documents\\\\Gastos_casa'; git init; git add .; git status\")"
+    ]
+  }
+}
