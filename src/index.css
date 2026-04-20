@@ -1,5 +1,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+html { background: #FDF5FA; }
+
 :root {
   --font: 'Nunito', sans-serif;
   --font-title: 'Playfair Display', serif;
@@ -44,7 +46,7 @@
 
 body {
   font-family: var(--font);
-  background: var(--bg);
+  background: transparent;
   color: var(--text);
   font-size: 15px;
   line-height: 1.65;
@@ -58,6 +60,59 @@ input, select, textarea { font-family: var(--font); }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.25); border-radius: 4px; }
 
+/* ── Animated Mesh Background ───────────────────────────────── */
+@keyframes meshShift {
+  0%   { background-position: 0% 0%; }
+  25%  { background-position: 100% 50%; }
+  50%  { background-position: 50% 100%; }
+  75%  { background-position: 0% 50%; }
+  100% { background-position: 0% 0%; }
+}
+@keyframes floatBubble1 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  30%       { transform: translate(28px, -38px) scale(1.07); }
+  65%       { transform: translate(-18px, 22px) scale(0.95); }
+}
+@keyframes floatBubble2 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  35%       { transform: translate(-32px, 28px) scale(1.06); }
+  70%       { transform: translate(22px, -18px) scale(0.94); }
+}
+@keyframes floatBubble3 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  40%       { transform: translate(22px, 32px) scale(1.05); }
+  75%       { transform: translate(-28px, -22px) scale(0.97); }
+}
+@keyframes floatBubble4 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  45%       { transform: translate(-22px, -28px) scale(1.09); }
+  80%       { transform: translate(32px, 18px) scale(0.93); }
+}
+@keyframes floatBubble5 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  50%       { transform: translate(18px, -28px) scale(1.04); }
+}
+
+.animated-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(135deg, #FDF5FA 0%, #F3E8FF 35%, #FFE4F0 65%, #FDF5FA 100%);
+  background-size: 400% 400%;
+  animation: meshShift 18s ease-in-out infinite;
+}
+
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(55px);
+  will-change: transform;
+  pointer-events: none;
+}
+
+/* ── Page transitions ───────────────────────────────────────── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }

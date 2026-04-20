@@ -11,6 +11,8 @@ import Balance from './pages/Balance'
 import Presupuesto from './pages/Presupuesto'
 import PresupuestoPersonal from './pages/PresupuestoPersonal'
 import Personas from './pages/Personas'
+import OlvidePassword from './pages/OlvidePassword'
+import ResetPassword from './pages/ResetPassword'
 
 export default function App() {
   const { user, loading } = useAuth()
@@ -23,6 +25,8 @@ export default function App() {
         path="/login"
         element={user ? <Navigate to="/" replace /> : <Login />}
       />
+      <Route path="/olvide-password" element={<OlvidePassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route
         path="/*"
         element={

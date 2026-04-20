@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import AnimatedBackground from './AnimatedBackground'
 
 const navItems = [
   { to: '/',             icon: '✦',  label: 'Dashboard' },
@@ -16,7 +17,8 @@ export default function Layout({ children }) {
   const { perfil, cerrarSesion } = useAuth()
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', position: 'relative', zIndex: 1 }}>
+      <AnimatedBackground />
       <aside style={{
         width: 240,
         flexShrink: 0,
@@ -29,6 +31,7 @@ export default function Layout({ children }) {
         height: '100vh',
         overflowY: 'auto',
         boxShadow: '4px 0 32px rgba(30, 8, 69, 0.35)',
+        zIndex: 2,
       }}>
         <div style={{
           padding: '0 1.5rem 1.75rem',

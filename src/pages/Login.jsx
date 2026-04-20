@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import AnimatedBackground from '../components/AnimatedBackground'
 
 const inp = {
   width: '100%', padding: '11px 14px', fontSize: 14, fontWeight: 500,
@@ -61,9 +62,11 @@ export default function Login() {
   }
 
   if (confirmar) return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#FDF5FA,#F0E8FF,#FFF0F7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', fontFamily: 'Nunito, sans-serif' }}>
+    <>
+      <AnimatedBackground />
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', fontFamily: 'Nunito, sans-serif', position: 'relative', zIndex: 1 }}>
       <div style={{ textAlign: 'center', maxWidth: 400 }}>
-        <div style={{ fontSize: 48, marginBottom: 16 }}>✦</div>
+        <div style={{ fontSize: 48, marginBottom: 16, filter: 'drop-shadow(0 4px 16px rgba(217,70,168,0.3))' }}>✦</div>
         <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 24, color: '#2A1040', marginBottom: 10 }}>¡Revisa tu correo!</h2>
         <p style={{ color: '#7A5070', fontSize: 14, lineHeight: 1.6 }}>
           Te enviamos un enlace de confirmación a <strong>{form.email}</strong>. Una vez confirmado, podrás ingresar.
@@ -73,10 +76,13 @@ export default function Login() {
         </button>
       </div>
     </div>
+    </>
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#FDF5FA 0%,#F0E8FF 50%,#FFF0F7 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', fontFamily: 'Nunito, sans-serif' }}>
+    <>
+    <AnimatedBackground />
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', fontFamily: 'Nunito, sans-serif', position: 'relative', zIndex: 1 }}>
       <div style={{ width: '100%', maxWidth: 440 }}>
 
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
@@ -137,6 +143,14 @@ export default function Login() {
                 </div>
               )}
 
+              {modo === 'login' && (
+                <div style={{ textAlign: 'right', marginTop: -8 }}>
+                  <Link to="/olvide-password" style={{ fontSize: 12, color: '#A855F7', fontWeight: 600, textDecoration: 'none' }}>
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={loading}
@@ -156,5 +170,6 @@ export default function Login() {
         </div>
       </div>
     </div>
+    </>
   )
 }
