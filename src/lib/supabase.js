@@ -6,27 +6,29 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 export const supabase = createClient(supabaseUrl, supabaseKey)
 
 /*
-  ══════════════════════════════════════════════════════
-  INSTRUCCIONES: Ejecuta este SQL en Supabase → SQL Editor
-  ══════════════════════════════════════════════════════
+  ══════════════════════════════════════════════════════════════
+  INSTRUCCIONES: Ejecuta este SQL completo en Supabase → SQL Editor
+  ══════════════════════════════════════════════════════════════
 
-  -- Tabla de personas del hogar
-  CREATE TABLE personas (
+  ── TABLAS BASE (si no existen aún) ──────────────────────────
+
+  CREATE TABLE IF NOT EXISTS personas (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     nombre text NOT NULL,
     color text DEFAULT '#6366f1',
     created_at timestamptz DEFAULT now()
   );
 
-  -- Insertar las 4 personas
-  INSERT INTO personas (nombre, color) VALUES
+  INSERT INTO personas (nombre, color)
+  SELECT nombre, color FROM (VALUES
     ('Persona 1', '#7C6FE0'),
     ('Persona 2', '#1D9E75'),
     ('Persona 3', '#D85A30'),
-    ('Persona 4', '#D4537E');
+    ('Persona 4', '#D4537E')
+  ) AS v(nombre, color)
+  WHERE NOT EXISTS (SELECT 1 FROM personas LIMIT 1);
 
-  -- Tabla de gastos
-  CREATE TABLE gastos (
+  CREATE TABLE IF NOT EXISTS gastos (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     descripcion text NOT NULL,
     monto numeric(12,2) NOT NULL,
@@ -36,18 +38,90 @@ export const supabase = createClient(supabaseUrl, supabaseKey)
     mes text GENERATED ALWAYS AS (to_char(fecha, 'YYYY-MM')) STORED,
     split_entre uuid[] NOT NULL,
     notas text,
+    creado_por uuid REFERENCES auth.users(id),
     created_at timestamptz DEFAULT now()
   );
 
-  -- Índices para consultas rápidas
-  CREATE INDEX idx_gastos_mes ON gastos(mes);
-  CREATE INDEX idx_gastos_fecha ON gastos(fecha);
-  CREATE INDEX idx_gastos_categoria ON gastos(categoria);
+  -- Añadir creado_por a gastos si ya existe la tabla
+  ALTER TABLE gastos ADD COLUMN IF NOT EXISTS creado_por uuid REFERENCES auth.users(id);
 
-  -- Habilitar Row Level Security (acceso público de lectura/escritura)
-  ALTER TABLE gastos ENABLE ROW LEVEL SECURITY;
+  CREATE INDEX IF NOT EXISTS idx_gastos_mes       ON gastos(mes);
+  CREATE INDEX IF NOT EXISTS idx_gastos_fecha     ON gastos(fecha);
+  CREATE INDEX IF NOT EXISTS idx_gastos_categoria ON gastos(categoria);
+
+  ── NUEVAS TABLAS AUTH ────────────────────────────────────────
+
+  -- Perfiles de usuario (se crea automáticamente al registrarse)
+  CREATE TABLE IF NOT EXISTS perfiles (
+    id uuid REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+    nombre text NOT NULL,
+    email text NOT NULL,
+    created_at timestamptz DEFAULT now()
+  );
+
+  -- Trigger: crear perfil automáticamente al registrarse
+  CREATE OR REPLACE FUNCTION public.handle_new_user()
+  RETURNS trigger AS $$
+  BEGIN
+    INSERT INTO public.perfiles (id, nombre, email)
+    VALUES (
+      new.id,
+      COALESCE(new.raw_user_meta_data->>'nombre', split_part(new.email, '@', 1)),
+      new.email
+    )
+    ON CONFLICT (id) DO NOTHING;
+    RETURN new;
+  END;
+  $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+  DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+  CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+  -- Presupuesto del hogar (compartido, un monto por mes)
+  CREATE TABLE IF NOT EXISTS presupuestos_hogar (
+    mes text PRIMARY KEY,
+    monto numeric(12,2) NOT NULL,
+    updated_at timestamptz DEFAULT now()
+  );
+
+  -- Presupuestos personales (privados por usuario, múltiples por mes)
+  CREATE TABLE IF NOT EXISTS presupuestos_personales (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    usuario_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    mes text NOT NULL,
+    descripcion text NOT NULL,
+    monto numeric(12,2) NOT NULL,
+    created_at timestamptz DEFAULT now()
+  );
+
+  ── ROW LEVEL SECURITY ────────────────────────────────────────
+
+  -- Gastos: solo usuarios autenticados
+  ALTER TABLE gastos  ENABLE ROW LEVEL SECURITY;
   ALTER TABLE personas ENABLE ROW LEVEL SECURITY;
+  DROP POLICY IF EXISTS "acceso_publico_gastos"   ON gastos;
+  DROP POLICY IF EXISTS "acceso_publico_personas" ON personas;
+  CREATE POLICY "gastos_autenticados"   ON gastos   FOR ALL USING (auth.role() = 'authenticated');
+  CREATE POLICY "personas_autenticadas" ON personas FOR ALL USING (auth.role() = 'authenticated');
 
-  CREATE POLICY "acceso_publico_gastos" ON gastos FOR ALL USING (true);
-  CREATE POLICY "acceso_publico_personas" ON personas FOR ALL USING (true);
+  -- Perfiles: lectura pública entre autenticados, escritura solo propia
+  ALTER TABLE perfiles ENABLE ROW LEVEL SECURITY;
+  DROP POLICY IF EXISTS "perfil_lectura"  ON perfiles;
+  DROP POLICY IF EXISTS "perfil_insert"   ON perfiles;
+  DROP POLICY IF EXISTS "perfil_update"   ON perfiles;
+  CREATE POLICY "perfil_lectura" ON perfiles FOR SELECT USING (auth.role() = 'authenticated');
+  CREATE POLICY "perfil_insert"  ON perfiles FOR INSERT WITH CHECK (auth.uid() = id);
+  CREATE POLICY "perfil_update"  ON perfiles FOR UPDATE USING (auth.uid() = id);
+
+  -- Presupuesto del hogar: todos los autenticados
+  ALTER TABLE presupuestos_hogar ENABLE ROW LEVEL SECURITY;
+  DROP POLICY IF EXISTS "ph_autenticados" ON presupuestos_hogar;
+  CREATE POLICY "ph_autenticados" ON presupuestos_hogar FOR ALL USING (auth.role() = 'authenticated');
+
+  -- Presupuestos personales: solo el propietario
+  ALTER TABLE presupuestos_personales ENABLE ROW LEVEL SECURITY;
+  DROP POLICY IF EXISTS "pp_privado" ON presupuestos_personales;
+  CREATE POLICY "pp_privado" ON presupuestos_personales FOR ALL USING (auth.uid() = usuario_id);
 */

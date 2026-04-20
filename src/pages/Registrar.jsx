@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
 import { Card, PageTitle, CATEGORIAS, Avatar } from '../components/UI'
 
 export default function Registrar() {
+  const { user } = useAuth()
   const [personas, setPersonas] = useState([])
   const [form, setForm] = useState({
     descripcion: '', monto: '', categoria: 'mercado',
@@ -54,6 +56,7 @@ export default function Registrar() {
       fecha: form.fecha,
       split_entre: form.split_entre,
       notas: form.notas || null,
+      creado_por: user?.id || null,
     }])
     setGuardando(false)
     if (error) { setMsg({ tipo: 'error', texto: 'Error al guardar: ' + error.message }); return }
@@ -82,7 +85,7 @@ export default function Registrar() {
           <div style={{
             padding: '11px 16px', borderRadius: 11, marginBottom: '1.25rem', fontSize: 14, fontWeight: 600,
             background: msg.tipo === 'ok'
-              ? 'linear-gradient(135deg, rgba(20,184,166,0.12), rgba(99,102,241,0.08))'
+              ? 'linear-gradient(135deg,rgba(20,184,166,0.12),rgba(99,102,241,0.08))'
               : 'var(--red-bg)',
             color: msg.tipo === 'ok' ? 'var(--teal)' : 'var(--red)',
             border: `1px solid ${msg.tipo === 'ok' ? 'rgba(20,184,166,0.25)' : 'rgba(244,63,94,0.2)'}`,
@@ -154,8 +157,7 @@ export default function Registrar() {
         </div>
 
         <button
-          onClick={guardar}
-          disabled={guardando}
+          onClick={guardar} disabled={guardando}
           className="btn-gradient"
           style={{
             width: '100%', padding: '12px', fontSize: 15,

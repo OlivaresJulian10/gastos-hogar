@@ -4,8 +4,6 @@ import { Card, PageTitle, fmt } from '../components/UI'
 import { format, subMonths } from 'date-fns'
 import { es } from 'date-fns/locale'
 
-const storageKey = (mes) => `presupuesto_${mes}`
-
 function ProgressBar({ gastado, presupuesto }) {
   if (presupuesto <= 0) return <span style={{ fontSize: 12, color: 'var(--text3)', fontStyle: 'italic' }}>Sin presupuesto</span>
   const pct = Math.min((gastado / presupuesto) * 100, 100)
@@ -36,6 +34,8 @@ export default function Presupuesto() {
   const [monto, setMonto] = useState('')
   const [msg, setMsg] = useState(null)
   const [gastosPorMes, setGastosPorMes] = useState({})
+  const [presupuestosPorMes, setPresupuestosPorMes] = useState({})
+  const [loadingMes, setLoadingMes] = useState(false)
 
   const mesesOpts = Array.from({ length: 12 }, (_, i) => {
     const d = subMonths(new Date(), i)
@@ -46,30 +46,42 @@ export default function Presupuesto() {
     format(subMonths(new Date(), i), 'yyyy-MM')
   )
 
+  // Cargar presupuesto del mes seleccionado
   useEffect(() => {
-    const saved = localStorage.getItem(storageKey(mes))
-    setMonto(saved || '')
+    setLoadingMes(true)
+    supabase.from('presupuestos_hogar').select('monto').eq('mes', mes).maybeSingle()
+      .then(({ data }) => {
+        setMonto(data?.monto?.toString() || '')
+        setLoadingMes(false)
+      })
   }, [mes])
 
+  // Cargar gastos y presupuestos de los últimos 6 meses
   useEffect(() => {
-    supabase.from('gastos').select('mes, monto')
-      .in('mes', ultimos6keys)
-      .then(({ data }) => {
-        const agrupado = {}
-        ;(data || []).forEach(g => {
-          agrupado[g.mes] = (agrupado[g.mes] || 0) + Number(g.monto)
-        })
-        setGastosPorMes(agrupado)
-      })
+    Promise.all([
+      supabase.from('gastos').select('mes,monto').in('mes', ultimos6keys),
+      supabase.from('presupuestos_hogar').select('mes,monto').in('mes', ultimos6keys),
+    ]).then(([{ data: g }, { data: p }]) => {
+      const ag = {}
+      ;(g || []).forEach(x => { ag[x.mes] = (ag[x.mes] || 0) + Number(x.monto) })
+      setGastosPorMes(ag)
+
+      const ap = {}
+      ;(p || []).forEach(x => { ap[x.mes] = Number(x.monto) })
+      setPresupuestosPorMes(ap)
+    })
   }, [])
 
-  const guardar = () => {
+  const guardar = async () => {
     const val = parseFloat(monto)
     if (!val || val <= 0) {
       setMsg({ tipo: 'error', texto: 'Ingresa un monto válido mayor a cero.' }); return
     }
-    localStorage.setItem(storageKey(mes), val.toString())
-    setMsg({ tipo: 'ok', texto: '¡Presupuesto guardado exitosamente! ✦' })
+    const { error } = await supabase.from('presupuestos_hogar')
+      .upsert({ mes, monto: val, updated_at: new Date().toISOString() }, { onConflict: 'mes' })
+    if (error) { setMsg({ tipo: 'error', texto: 'Error: ' + error.message }); return }
+    setPresupuestosPorMes(p => ({ ...p, [mes]: val }))
+    setMsg({ tipo: 'ok', texto: '¡Presupuesto guardado! ✦' })
     setTimeout(() => setMsg(null), 3000)
   }
 
@@ -79,29 +91,21 @@ export default function Presupuesto() {
     background: 'var(--surface)', color: 'var(--text)',
     outline: 'none', fontFamily: 'var(--font)', width: '100%',
   }
-  const selectStyle = {
-    padding: '10px 14px', fontSize: 14, fontWeight: 600,
-    border: '1px solid var(--border-strong)', borderRadius: 11,
-    background: 'var(--surface)', color: 'var(--text)',
-    outline: 'none', fontFamily: 'var(--font)', width: '100%', cursor: 'pointer',
-  }
-  const labelStyle = {
+  const sel = { ...inp, fontSize: 14, cursor: 'pointer' }
+  const lbl = {
     fontSize: 12, color: 'var(--text2)', fontWeight: 700,
     letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block', marginBottom: 6,
   }
 
   return (
     <div>
-      <PageTitle title="Presupuesto mensual" sub="Define cuánto quieres gastar cada mes y monitorea tu avance" />
+      <PageTitle title="Presupuesto del hogar" sub="Compartido entre todos los miembros del hogar" />
 
       <Card style={{ maxWidth: 520, marginBottom: '1.75rem' }}>
         {msg && (
           <div style={{
-            padding: '10px 16px', borderRadius: 10, marginBottom: '1.25rem',
-            fontSize: 14, fontWeight: 600,
-            background: msg.tipo === 'ok'
-              ? 'linear-gradient(135deg,rgba(20,184,166,0.12),rgba(99,102,241,0.08))'
-              : 'var(--red-bg)',
+            padding: '10px 16px', borderRadius: 10, marginBottom: '1.25rem', fontSize: 14, fontWeight: 600,
+            background: msg.tipo === 'ok' ? 'linear-gradient(135deg,rgba(20,184,166,0.12),rgba(99,102,241,0.08))' : 'var(--red-bg)',
             color: msg.tipo === 'ok' ? 'var(--teal)' : 'var(--red)',
             border: `1px solid ${msg.tipo === 'ok' ? 'rgba(20,184,166,0.25)' : 'rgba(244,63,94,0.2)'}`,
           }}>
@@ -111,22 +115,20 @@ export default function Presupuesto() {
 
         <div style={{ display: 'grid', gap: '1.25rem' }}>
           <div>
-            <label style={labelStyle}>Mes</label>
-            <select value={mes} onChange={e => setMes(e.target.value)} style={selectStyle}>
+            <label style={lbl}>Mes</label>
+            <select value={mes} onChange={e => setMes(e.target.value)} style={sel}>
               {mesesOpts.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
             </select>
           </div>
           <div>
-            <label style={labelStyle}>Presupuesto (COP)</label>
+            <label style={lbl}>Presupuesto (COP)</label>
             <input
-              type="number"
-              value={monto}
+              type="number" value={loadingMes ? '' : monto}
               onChange={e => setMonto(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && guardar()}
-              placeholder="Ej: 3000000"
-              min="0"
-              step="50000"
-              style={inp}
+              placeholder={loadingMes ? 'Cargando...' : 'Ej: 3000000'}
+              min="0" step="50000" style={inp}
+              disabled={loadingMes}
               onFocus={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(217,70,168,0.12)' }}
               onBlur={e => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.boxShadow = '' }}
             />
@@ -152,21 +154,15 @@ export default function Presupuesto() {
         </p>
         {ultimos6keys.map((key, i) => {
           const label = format(new Date(key + '-01'), 'MMMM yyyy', { locale: es })
-          const presupuestoMes = parseFloat(localStorage.getItem(storageKey(key)) || '0')
+          const presupuestoMes = presupuestosPorMes[key] || 0
           const gastado = gastosPorMes[key] || 0
           return (
-            <div key={key} style={{
-              padding: '14px 0',
-              borderBottom: i < 5 ? '1px solid var(--border)' : 'none',
-            }}>
+            <div key={key} style={{ padding: '14px 0', borderBottom: i < 5 ? '1px solid var(--border)' : 'none' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                 <div>
-                  <p style={{
-                    fontSize: 14, fontWeight: 700,
-                    color: key === mesActual ? 'var(--accent)' : 'var(--text)',
-                    textTransform: 'capitalize',
-                  }}>
-                    {label} {key === mesActual && <span style={{ fontSize: 11, background: 'var(--accent-bg)', color: 'var(--accent)', borderRadius: 20, padding: '2px 8px', marginLeft: 4 }}>actual</span>}
+                  <p style={{ fontSize: 14, fontWeight: 700, color: key === mesActual ? 'var(--accent)' : 'var(--text)', textTransform: 'capitalize' }}>
+                    {label}{' '}
+                    {key === mesActual && <span style={{ fontSize: 11, background: 'var(--accent-bg)', color: 'var(--accent)', borderRadius: 20, padding: '2px 8px', marginLeft: 4 }}>actual</span>}
                   </p>
                   <p style={{ fontSize: 12, color: 'var(--text2)', marginTop: 3 }}>
                     Gastado: <strong>{fmt(gastado)}</strong>
@@ -177,8 +173,7 @@ export default function Presupuesto() {
                   <span style={{
                     fontSize: 13, fontWeight: 700,
                     color: gastado > presupuestoMes ? '#F43F5E'
-                      : ((presupuestoMes - gastado) / presupuestoMes) > 0.5 ? '#14B8A6'
-                      : '#F59E0B',
+                      : ((presupuestoMes - gastado) / presupuestoMes) > 0.5 ? '#14B8A6' : '#F59E0B',
                   }}>
                     {gastado > presupuestoMes ? '⚠ Excedido' : '✦ OK'}
                   </span>

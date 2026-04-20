@@ -5,6 +5,7 @@ import {
   LineElement, PointElement, ArcElement, Tooltip, Legend, Filler
 } from 'chart.js'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
 import { Card, MetricCard, PageTitle, fmt, CATEGORIAS, CAT_CHART_COLORS } from '../components/UI'
 import { format, subMonths } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -15,22 +16,34 @@ const mesActual = format(new Date(), 'yyyy-MM')
 const PERSONA_COLORS = ['#FF6B9D', '#A855F7', '#FB923C', '#EC4899']
 
 export default function Dashboard() {
+  const { user } = useAuth()
   const [gastos, setGastos] = useState([])
   const [personas, setPersonas] = useState([])
+  const [presupuestoHogar, setPresupuestoHogar] = useState(0)
+  const [presupuestosPersonales, setPresupuestosPersonales] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function cargar() {
-      const [{ data: g }, { data: p }] = await Promise.all([
+      const queries = [
         supabase.from('gastos').select('*').order('fecha', { ascending: false }),
-        supabase.from('personas').select('*')
-      ])
-      setGastos(g || [])
-      setPersonas(p || [])
+        supabase.from('personas').select('*'),
+        supabase.from('presupuestos_hogar').select('monto').eq('mes', mesActual).maybeSingle(),
+      ]
+      if (user) {
+        queries.push(
+          supabase.from('presupuestos_personales').select('*').eq('mes', mesActual).eq('usuario_id', user.id)
+        )
+      }
+      const results = await Promise.all(queries)
+      setGastos(results[0].data || [])
+      setPersonas(results[1].data || [])
+      setPresupuestoHogar(results[2].data?.monto ? parseFloat(results[2].data.monto) : 0)
+      if (user) setPresupuestosPersonales(results[3].data || [])
       setLoading(false)
     }
     cargar()
-  }, [])
+  }, [user])
 
   if (loading) return (
     <p style={{ color: 'var(--text2)', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -42,7 +55,7 @@ export default function Dashboard() {
   const totalMes = gastosMes.reduce((s, g) => s + Number(g.monto), 0)
   const totalTotal = gastos.reduce((s, g) => s + Number(g.monto), 0)
 
-  const presupuesto = parseFloat(localStorage.getItem(`presupuesto_${mesActual}`) || '0')
+  const presupuesto = presupuestoHogar
   const pctUsado = presupuesto > 0 ? Math.min((totalMes / presupuesto) * 100, 100) : 0
   const pctRestante = presupuesto > 0 ? Math.max(((presupuesto - totalMes) / presupuesto) * 100, 0) : 0
   const excedido = presupuesto > 0 && totalMes > presupuesto
@@ -230,6 +243,41 @@ export default function Dashboard() {
           />
         </div>
       </Card>
+
+      {presupuestosPersonales.length > 0 && (
+        <Card style={{ marginBottom: '1.25rem' }}>
+          <p style={{ fontSize: 13, fontWeight: 700, marginBottom: '1rem', color: 'var(--text2)', letterSpacing: '0.3px' }}>
+            Mi presupuesto personal — {format(new Date(), 'MMMM yyyy', { locale: es })}
+          </p>
+          {presupuestosPersonales.map((pp, idx) => {
+            const totalPP = presupuestosPersonales.reduce((s, x) => s + Number(x.monto), 0)
+            if (idx > 0) return null
+            return (
+              <div key="pp-summary">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                  <span style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 600 }}>
+                    {presupuestosPersonales.length} {presupuestosPersonales.length === 1 ? 'partida' : 'partidas'}
+                  </span>
+                  <span style={{ fontSize: 18, fontWeight: 700, fontFamily: "'Playfair Display', serif", background: 'var(--grad-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                    {fmt(totalPP)}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {presupuestosPersonales.map(p => (
+                    <div key={p.id} style={{
+                      padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+                      background: 'var(--accent-bg)', color: 'var(--accent-text)',
+                      border: '1px solid rgba(168,85,247,0.2)',
+                    }}>
+                      {p.descripcion} · {fmt(p.monto)}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </Card>
+      )}
 
       <Card>
         <p style={{ fontSize: 13, fontWeight: 700, marginBottom: '1rem', color: 'var(--text2)', letterSpacing: '0.3px' }}>
