@@ -64,7 +64,7 @@ function FacturaPreview({ file, previewUrl, onRemove }) {
 }
 
 export default function Registrar() {
-  const { user } = useAuth()
+  const { user, perfil, recargarPerfil } = useAuth()
   const [personas, setPersonas] = useState([])
   const [form, setForm] = useState({
     descripcion: '', monto: '', categoria: 'mercado',
@@ -131,6 +131,13 @@ export default function Registrar() {
       setMsg({ tipo: 'error', texto: 'Selecciona al menos una persona para dividir.' }); return
     }
     setGuardando(true); setMsg(null)
+
+    // 0. Ensure profile exists (trigger may have failed for some users)
+    if (!perfil && user) {
+      const nombre = user.user_metadata?.nombre || user.email.split('@')[0]
+      await supabase.from('perfiles').upsert({ id: user.id, nombre, email: user.email }, { onConflict: 'id' })
+      await recargarPerfil()
+    }
 
     // 1. Insert gasto
     const { data, error } = await supabase.from('gastos').insert([{
