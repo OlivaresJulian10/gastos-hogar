@@ -1,6 +1,6 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { background: #FDF5FA; }
+html { background: transparent; }
 
 :root {
   --font: 'Nunito', sans-serif;
@@ -46,7 +46,9 @@ html { background: #FDF5FA; }
 
 body {
   font-family: var(--font);
-  background: transparent;
+  background: linear-gradient(135deg, #FDF5FA 0%, #F3E8FF 35%, #FFE4F0 65%, #FDF5FA 100%);
+  background-size: 400% 400%;
+  animation: meshShift 18s ease-in-out infinite;
   color: var(--text);
   font-size: 15px;
   line-height: 1.65;
@@ -93,23 +95,25 @@ input, select, textarea { font-family: var(--font); }
   50%       { transform: translate(18px, -28px) scale(1.04); }
 }
 
-.animated-bg {
+.bubble-layer {
   position: fixed;
   inset: 0;
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
-  background: linear-gradient(135deg, #FDF5FA 0%, #F3E8FF 35%, #FFE4F0 65%, #FDF5FA 100%);
-  background-size: 400% 400%;
-  animation: meshShift 18s ease-in-out infinite;
 }
 
 .bubble {
   position: absolute;
   border-radius: 50%;
-  filter: blur(55px);
+  filter: blur(40px);
   will-change: transform;
   pointer-events: none;
+}
+
+.page-root {
+  position: relative;
+  z-index: 1;
 }
 
 /* ── Page transitions ───────────────────────────────────────── */

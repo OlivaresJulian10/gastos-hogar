@@ -124,4 +124,34 @@ export const supabase = createClient(supabaseUrl, supabaseKey)
   ALTER TABLE presupuestos_personales ENABLE ROW LEVEL SECURITY;
   DROP POLICY IF EXISTS "pp_privado" ON presupuestos_personales;
   CREATE POLICY "pp_privado" ON presupuestos_personales FOR ALL USING (auth.uid() = usuario_id);
+
+  ── FOTO DE PERFIL ────────────────────────────────────────────
+
+  -- Columna avatar_url en perfiles
+  ALTER TABLE perfiles ADD COLUMN IF NOT EXISTS avatar_url text;
+
+  -- Bucket público "avatares" (crear en Supabase → Storage → New bucket)
+  -- Name: avatares  |  Public: true
+  -- O ejecutar:
+  INSERT INTO storage.buckets (id, name, public)
+  VALUES ('avatares', 'avatares', true)
+  ON CONFLICT (id) DO NOTHING;
+
+  -- RLS para storage: cualquier autenticado puede subir/actualizar
+  DROP POLICY IF EXISTS "avatares_select" ON storage.objects;
+  DROP POLICY IF EXISTS "avatares_insert" ON storage.objects;
+  DROP POLICY IF EXISTS "avatares_update" ON storage.objects;
+  DROP POLICY IF EXISTS "avatares_delete" ON storage.objects;
+
+  CREATE POLICY "avatares_select" ON storage.objects
+    FOR SELECT USING (bucket_id = 'avatares');
+
+  CREATE POLICY "avatares_insert" ON storage.objects
+    FOR INSERT WITH CHECK (bucket_id = 'avatares' AND auth.role() = 'authenticated');
+
+  CREATE POLICY "avatares_update" ON storage.objects
+    FOR UPDATE USING (bucket_id = 'avatares' AND auth.role() = 'authenticated');
+
+  CREATE POLICY "avatares_delete" ON storage.objects
+    FOR DELETE USING (bucket_id = 'avatares' AND auth.role() = 'authenticated');
 */

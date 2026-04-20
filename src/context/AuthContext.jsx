@@ -34,8 +34,14 @@ export function AuthProvider({ children }) {
 
   const cerrarSesion = () => supabase.auth.signOut()
 
+  const recargarPerfil = async () => {
+    if (!user) return
+    const { data } = await supabase.from('perfiles').select('*').eq('id', user.id).maybeSingle()
+    setPerfil(data)
+  }
+
   return (
-    <AuthContext.Provider value={{ user, perfil, loading, cerrarSesion }}>
+    <AuthContext.Provider value={{ user, perfil, loading, cerrarSesion, recargarPerfil }}>
       {children}
     </AuthContext.Provider>
   )

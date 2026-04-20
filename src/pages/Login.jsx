@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import AnimatedBackground from '../components/AnimatedBackground'
 
 const inp = {
   width: '100%', padding: '11px 14px', fontSize: 14, fontWeight: 500,
@@ -62,9 +61,7 @@ export default function Login() {
   }
 
   if (confirmar) return (
-    <>
-      <AnimatedBackground />
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', fontFamily: 'Nunito, sans-serif', position: 'relative', zIndex: 1 }}>
+    <div className="page-root" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', fontFamily: 'Nunito, sans-serif' }}>
       <div style={{ textAlign: 'center', maxWidth: 400 }}>
         <div style={{ fontSize: 48, marginBottom: 16, filter: 'drop-shadow(0 4px 16px rgba(217,70,168,0.3))' }}>✦</div>
         <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 24, color: '#2A1040', marginBottom: 10 }}>¡Revisa tu correo!</h2>
@@ -76,13 +73,10 @@ export default function Login() {
         </button>
       </div>
     </div>
-    </>
   )
 
   return (
-    <>
-    <AnimatedBackground />
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', fontFamily: 'Nunito, sans-serif', position: 'relative', zIndex: 1 }}>
+    <div className="page-root" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', fontFamily: 'Nunito, sans-serif' }}>
       <div style={{ width: '100%', maxWidth: 440 }}>
 
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
@@ -92,7 +86,7 @@ export default function Login() {
           <p style={{ fontSize: 13, color: '#7A5070', fontWeight: 500 }}>Control de gastos del hogar</p>
         </div>
 
-        <div style={{ background: 'white', borderRadius: 24, padding: '2rem', boxShadow: '0 20px 60px rgba(168,85,247,0.15)', border: '1px solid rgba(210,100,160,0.13)' }}>
+        <div style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(16px)', borderRadius: 24, padding: '2rem', boxShadow: '0 20px 60px rgba(168,85,247,0.18)', border: '1px solid rgba(210,100,160,0.15)' }}>
 
           <div style={{ display: 'flex', background: '#FDF5FA', borderRadius: 12, padding: 4, marginBottom: '1.5rem' }}>
             {['login', 'registro'].map(m => (
@@ -170,6 +164,5 @@ export default function Login() {
         </div>
       </div>
     </div>
-    </>
   )
 }
