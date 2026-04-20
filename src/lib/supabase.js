@@ -182,4 +182,26 @@ export const supabase = createClient(supabaseUrl, supabaseKey)
 
   CREATE POLICY "facturas_delete" ON storage.objects
     FOR DELETE USING (bucket_id = 'facturas' AND auth.role() = 'authenticated');
+
+  ── GASTOS PERSONALES ─────────────────────────────────────────
+
+  -- Tabla privada de gastos personales (solo el propietario los ve)
+  CREATE TABLE IF NOT EXISTS gastos_personales (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    usuario_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    fecha date NOT NULL DEFAULT CURRENT_DATE,
+    mes text GENERATED ALWAYS AS (to_char(fecha, 'YYYY-MM')) STORED,
+    descripcion text NOT NULL,
+    monto numeric(12,2) NOT NULL,
+    categoria text NOT NULL DEFAULT 'otros',
+    notas text,
+    factura_url text,
+    created_at timestamptz DEFAULT now()
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_gp_usuario_mes ON gastos_personales(usuario_id, mes);
+
+  ALTER TABLE gastos_personales ENABLE ROW LEVEL SECURITY;
+  DROP POLICY IF EXISTS "gp_privado" ON gastos_personales;
+  CREATE POLICY "gp_privado" ON gastos_personales FOR ALL USING (auth.uid() = usuario_id);
 */
