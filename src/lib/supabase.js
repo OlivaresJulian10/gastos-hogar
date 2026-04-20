@@ -154,4 +154,32 @@ export const supabase = createClient(supabaseUrl, supabaseKey)
 
   CREATE POLICY "avatares_delete" ON storage.objects
     FOR DELETE USING (bucket_id = 'avatares' AND auth.role() = 'authenticated');
+
+  ── FACTURAS ─────────────────────────────────────────────────
+
+  -- Columna factura_url en gastos
+  ALTER TABLE gastos ADD COLUMN IF NOT EXISTS factura_url text;
+
+  -- Bucket público "facturas"
+  INSERT INTO storage.buckets (id, name, public)
+  VALUES ('facturas', 'facturas', true)
+  ON CONFLICT (id) DO NOTHING;
+
+  -- RLS para storage bucket facturas
+  DROP POLICY IF EXISTS "facturas_select" ON storage.objects;
+  DROP POLICY IF EXISTS "facturas_insert" ON storage.objects;
+  DROP POLICY IF EXISTS "facturas_update" ON storage.objects;
+  DROP POLICY IF EXISTS "facturas_delete" ON storage.objects;
+
+  CREATE POLICY "facturas_select" ON storage.objects
+    FOR SELECT USING (bucket_id = 'facturas');
+
+  CREATE POLICY "facturas_insert" ON storage.objects
+    FOR INSERT WITH CHECK (bucket_id = 'facturas' AND auth.role() = 'authenticated');
+
+  CREATE POLICY "facturas_update" ON storage.objects
+    FOR UPDATE USING (bucket_id = 'facturas' AND auth.role() = 'authenticated');
+
+  CREATE POLICY "facturas_delete" ON storage.objects
+    FOR DELETE USING (bucket_id = 'facturas' AND auth.role() = 'authenticated');
 */
