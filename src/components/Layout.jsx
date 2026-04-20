@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 const navItems = [
@@ -10,6 +10,7 @@ const navItems = [
   { to: '/presupuesto',    icon: '◐',  label: 'Presupuesto hogar' },
   { to: '/mi-presupuesto', icon: '◆',  label: 'Mi presupuesto' },
   { to: '/personas',       icon: '◉',  label: 'Personas' },
+  { to: '/perfil',         icon: '⊙',  label: 'Perfil' },
 ]
 
 const navStyle = ({ isActive }) => ({
@@ -27,6 +28,7 @@ const navStyle = ({ isActive }) => ({
 
 export default function Layout({ children }) {
   const { perfil, cerrarSesion } = useAuth()
+  const navigate = useNavigate()
 
   return (
     <div className="page-root" style={{ display: 'flex', minHeight: '100vh' }}>
@@ -44,6 +46,7 @@ export default function Layout({ children }) {
         boxShadow: '4px 0 32px rgba(30, 8, 69, 0.35)',
         zIndex: 2,
       }}>
+
         {/* Logo */}
         <div style={{
           padding: '0 1.5rem 1.75rem',
@@ -59,7 +62,7 @@ export default function Layout({ children }) {
           </div>
         </div>
 
-        {/* Nav */}
+        {/* Nav items */}
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '0 0.875rem', flex: 1, overflowY: 'auto' }}>
           {navItems.map(item => (
             <NavLink key={item.to} to={item.to} end={item.to === '/'} style={navStyle}>
@@ -69,72 +72,90 @@ export default function Layout({ children }) {
           ))}
         </nav>
 
-        {/* User section — links to /perfil */}
-        <div style={{ flexShrink: 0, borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: '0.5rem' }}>
-          {perfil ? (
-            <>
-              <NavLink
-                to="/perfil"
-                style={({ isActive }) => ({
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '0.875rem 1.25rem',
-                  textDecoration: 'none',
-                  background: isActive ? 'rgba(255,107,157,0.12)' : 'transparent',
-                  transition: 'background 0.18s',
-                })}
-              >
-                {perfil.avatar_url ? (
-                  <img
-                    src={perfil.avatar_url}
-                    alt={perfil.nombre}
-                    style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid rgba(255,107,157,0.5)' }}
-                  />
-                ) : (
-                  <div style={{
-                    width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-                    background: 'linear-gradient(135deg,#FF6B9D,#A855F7)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 13, fontWeight: 700, color: 'white',
-                    boxShadow: '0 2px 10px rgba(168,85,247,0.4)',
-                  }}>
-                    {(perfil.nombre || '?').slice(0, 2).toUpperCase()}
-                  </div>
-                )}
-                <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {perfil.nombre}
-                  </p>
-                  <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>
-                    Ver perfil →
-                  </p>
-                </div>
-              </NavLink>
-
-              <div style={{ padding: '0 1.25rem 1rem' }}>
-                <button
-                  onClick={cerrarSesion}
+        {/* User section */}
+        {perfil && (
+          <div style={{
+            flexShrink: 0,
+            borderTop: '1px solid rgba(255,255,255,0.12)',
+            padding: '1rem 1.25rem 1.25rem',
+            marginTop: '0.5rem',
+          }}>
+            {/* Avatar + nombre */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.75rem' }}>
+              {perfil.avatar_url ? (
+                <img
+                  src={perfil.avatar_url}
+                  alt={perfil.nombre}
                   style={{
-                    width: '100%', padding: '7px', fontSize: 12, fontWeight: 700,
-                    background: 'rgba(255,255,255,0.08)',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    borderRadius: 10, cursor: 'pointer',
-                    color: 'rgba(255,255,255,0.6)',
-                    fontFamily: 'var(--font)', letterSpacing: '0.3px',
-                    transition: 'background 0.2s, color 0.2s',
+                    width: 38, height: 38, borderRadius: '50%', objectFit: 'cover',
+                    flexShrink: 0, border: '2px solid rgba(255,107,157,0.55)',
+                    boxShadow: '0 2px 10px rgba(168,85,247,0.35)',
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(244,63,94,0.28)'; e.currentTarget.style.color = 'white' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)' }}
-                >
-                  Cerrar sesión
-                </button>
+                />
+              ) : (
+                <div style={{
+                  width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
+                  background: 'linear-gradient(135deg,#FF6B9D,#A855F7)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 13, fontWeight: 700, color: 'white',
+                  boxShadow: '0 2px 10px rgba(168,85,247,0.4)',
+                }}>
+                  {(perfil.nombre || '?').slice(0, 2).toUpperCase()}
+                </div>
+              )}
+              <div style={{ minWidth: 0 }}>
+                <p style={{
+                  fontSize: 13, fontWeight: 700, color: 'white',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  {perfil.nombre}
+                </p>
+                <p style={{
+                  fontSize: 10, color: 'rgba(255,255,255,0.4)',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1,
+                }}>
+                  {perfil.email}
+                </p>
               </div>
-            </>
-          ) : (
-            <div style={{ padding: '1rem 1.25rem', fontSize: 11, color: 'rgba(255,255,255,0.3)', textAlign: 'center', letterSpacing: '0.5px' }}>
-              ✦ hecho con amor ✦
             </div>
-          )}
-        </div>
+
+            {/* Botones */}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => navigate('/perfil')}
+                style={{
+                  flex: 1, padding: '7px 0', fontSize: 11.5, fontWeight: 700,
+                  background: 'linear-gradient(135deg,rgba(255,107,157,0.25),rgba(168,85,247,0.2))',
+                  border: '1px solid rgba(255,107,157,0.35)',
+                  borderRadius: 9, cursor: 'pointer',
+                  color: 'rgba(255,255,255,0.9)',
+                  fontFamily: 'var(--font)', letterSpacing: '0.2px',
+                  transition: 'background 0.2s, border-color 0.2s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'linear-gradient(135deg,rgba(255,107,157,0.4),rgba(168,85,247,0.35))'; e.currentTarget.style.borderColor = 'rgba(255,107,157,0.6)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'linear-gradient(135deg,rgba(255,107,157,0.25),rgba(168,85,247,0.2))'; e.currentTarget.style.borderColor = 'rgba(255,107,157,0.35)' }}
+              >
+                Mi perfil
+              </button>
+              <button
+                onClick={cerrarSesion}
+                style={{
+                  flex: 1, padding: '7px 0', fontSize: 11.5, fontWeight: 700,
+                  background: 'rgba(255,255,255,0.07)',
+                  border: '1px solid rgba(255,255,255,0.14)',
+                  borderRadius: 9, cursor: 'pointer',
+                  color: 'rgba(255,255,255,0.55)',
+                  fontFamily: 'var(--font)', letterSpacing: '0.2px',
+                  transition: 'background 0.2s, color 0.2s, border-color 0.2s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(244,63,94,0.3)'; e.currentTarget.style.color = 'white'; e.currentTarget.style.borderColor = 'rgba(244,63,94,0.5)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)' }}
+              >
+                Cerrar sesión
+              </button>
+            </div>
+          </div>
+        )}
       </aside>
 
       <main style={{ flex: 1, padding: '2.5rem 2.25rem', maxWidth: 1000, width: '100%', minHeight: '100vh' }}>
