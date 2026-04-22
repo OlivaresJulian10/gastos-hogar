@@ -209,6 +209,8 @@ export const supabase = createClient(supabaseUrl, supabaseKey)
 
   ALTER TABLE personas ADD COLUMN IF NOT EXISTS nequi text;
   ALTER TABLE personas ADD COLUMN IF NOT EXISTS cuenta_bancaria text;
+  ALTER TABLE personas ADD COLUMN IF NOT EXISTS qr_nequi_url text;
+  ALTER TABLE personas ADD COLUMN IF NOT EXISTS qr_bancolombia_url text;
 
   ── PAGOS ENTRE PERSONAS ──────────────────────────────────────
 

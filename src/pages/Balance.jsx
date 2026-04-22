@@ -14,6 +14,9 @@ function PagoModal({ transfer, personas, mes, onPagado, onClose }) {
   const [registrando, setRegistrando] = useState(false)
   const [copiado, setCopiado]         = useState(null)
   const [pagado, setPagado]           = useState(false)
+  const [tab, setTab]                 = useState(
+    receptor?.qr_nequi_url || receptor?.nequi ? 'nequi' : 'bancolombia'
+  )
 
   useEffect(() => {
     const h = e => { if (e.key === 'Escape') onClose() }
@@ -42,16 +45,19 @@ function PagoModal({ transfer, personas, mes, onPagado, onClose }) {
     setTimeout(onClose, 1800)
   }
 
-  // Contenido del QR: si tiene Nequi, intentamos deep link; si no, texto formateado
-  const qrValue = receptor?.nequi
+  const hasNequi       = !!(receptor?.qr_nequi_url || receptor?.nequi)
+  const hasBancolombia = !!(receptor?.qr_bancolombia_url || receptor?.cuenta_bancaria)
+  const nequiDeepLink  = receptor?.nequi
     ? `nequi://transferencia?celular=${receptor.nequi.replace(/\D/g, '')}&valor=${Math.round(transfer.monto)}`
-    : [
-        `PAGO HOGAR`,
-        `De: ${pagador?.nombre}`,
-        `Para: ${receptor?.nombre}`,
-        `Monto: ${fmt(transfer.monto)}`,
-        receptor?.cuenta_bancaria ? `Banco: ${receptor.cuenta_bancaria}` : '',
-      ].filter(Boolean).join('\n')
+    : null
+
+  const btnTab = (active, accent) => ({
+    flex: 1, padding: '8px 10px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+    cursor: 'pointer', fontFamily: 'var(--font)', transition: 'all 0.18s',
+    border: active ? `2px solid ${accent}55` : '1.5px solid var(--border)',
+    background: active ? `${accent}12` : 'transparent',
+    color: active ? accent : 'var(--text2)',
+  })
 
   if (pagado) {
     return (
@@ -125,93 +131,113 @@ function PagoModal({ transfer, personas, mes, onPagado, onClose }) {
           </p>
         </div>
 
-        {/* QR Code */}
-        <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: 12 }}>
-            {receptor?.nequi ? 'Escanea con Nequi para pagar' : 'Código QR con datos de pago'}
-          </p>
-          <div style={{
-            display: 'inline-block', padding: 14, borderRadius: 16,
-            background: 'white', border: '2px solid var(--border)',
-            boxShadow: '0 4px 20px rgba(168,85,247,0.12)',
-          }}>
-            <QRCodeSVG
-              value={qrValue}
-              size={170}
-              level="M"
-              fgColor="#2A1040"
-              bgColor="white"
-            />
-          </div>
-          {receptor?.nequi && (
-            <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 8 }}>
-              Abre Nequi → Escanear → apunta la cámara al QR
-            </p>
-          )}
-        </div>
-
-        {/* Datos de pago */}
-        {(receptor?.nequi || receptor?.cuenta_bancaria) ? (
-          <div style={{ marginBottom: '1.25rem' }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: 10 }}>
-              O ingresa manualmente
-            </p>
-
-            {receptor.nequi && (
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
-                borderRadius: 12, marginBottom: 8,
-                background: 'linear-gradient(135deg,rgba(255,107,157,0.05),rgba(168,85,247,0.05))',
-                border: '1px solid var(--border)',
-              }}>
-                <span style={{ fontSize: 20, flexShrink: 0 }}>📱</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 700, letterSpacing: '0.5px' }}>NEQUI / DAVIPLATA</p>
-                  <p style={{ fontSize: 15, fontWeight: 700, marginTop: 1 }}>{receptor.nequi}</p>
-                </div>
-                <button
-                  onClick={() => copiar(receptor.nequi, 'nequi')}
-                  style={{
-                    fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 8,
-                    border: 'none', cursor: 'pointer', fontFamily: 'var(--font)', whiteSpace: 'nowrap',
-                    background: copiado === 'nequi' ? 'var(--teal)' : 'var(--accent-bg)',
-                    color: copiado === 'nequi' ? 'white' : 'var(--accent)',
-                    transition: 'background 0.2s, color 0.2s',
-                  }}
-                >
-                  {copiado === 'nequi' ? '✓ Copiado' : 'Copiar'}
+        {/* Tabs Nequi / Bancolombia */}
+        {(hasNequi || hasBancolombia) && (
+          <>
+            {hasNequi && hasBancolombia && (
+              <div style={{ display: 'flex', gap: 8, marginBottom: '1.25rem' }}>
+                <button style={btnTab(tab === 'nequi', '#FF6B9D')} onClick={() => setTab('nequi')}>
+                  📱 Nequi
+                </button>
+                <button style={btnTab(tab === 'bancolombia', '#6366F1')} onClick={() => setTab('bancolombia')}>
+                  🏦 Bancolombia
                 </button>
               </div>
             )}
 
-            {receptor.cuenta_bancaria && (
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
-                borderRadius: 12,
-                background: 'linear-gradient(135deg,rgba(99,102,241,0.05),rgba(168,85,247,0.05))',
-                border: '1px solid var(--border)',
-              }}>
-                <span style={{ fontSize: 20, flexShrink: 0 }}>🏦</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 700, letterSpacing: '0.5px' }}>CUENTA BANCARIA</p>
-                  <p style={{ fontSize: 15, fontWeight: 700, marginTop: 1 }}>{receptor.cuenta_bancaria}</p>
-                </div>
-                <button
-                  onClick={() => copiar(receptor.cuenta_bancaria, 'banco')}
-                  style={{
-                    fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 8,
-                    border: 'none', cursor: 'pointer', fontFamily: 'var(--font)', whiteSpace: 'nowrap',
-                    background: copiado === 'banco' ? 'var(--teal)' : 'var(--blue-bg)',
-                    color: copiado === 'banco' ? 'white' : 'var(--blue)',
-                    transition: 'background 0.2s, color 0.2s',
-                  }}
-                >
-                  {copiado === 'banco' ? '✓ Copiado' : 'Copiar'}
-                </button>
+            {/* ── Tab Nequi ── */}
+            {(tab === 'nequi' || !hasBancolombia) && hasNequi && (
+              <div style={{ marginBottom: '1.25rem' }}>
+                {receptor?.qr_nequi_url ? (
+                  <div style={{ textAlign: 'center', marginBottom: 14 }}>
+                    <img
+                      src={receptor.qr_nequi_url}
+                      alt="QR Nequi"
+                      style={{ width: 180, height: 180, objectFit: 'contain', borderRadius: 16, border: '2px solid rgba(255,107,157,0.3)', background: 'white' }}
+                    />
+                    <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 8 }}>QR Nequi · {receptor.nombre}</p>
+                  </div>
+                ) : nequiDeepLink ? (
+                  <div style={{ textAlign: 'center', marginBottom: 14 }}>
+                    <div style={{ display: 'inline-block', padding: 14, borderRadius: 16, background: 'white', border: '2px solid var(--border)', boxShadow: '0 4px 20px rgba(255,107,157,0.15)' }}>
+                      <QRCodeSVG value={nequiDeepLink} size={160} level="M" fgColor="#2A1040" bgColor="white" />
+                    </div>
+                    <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 8 }}>Escanea con Nequi → apunta la cámara</p>
+                  </div>
+                ) : null}
+
+                {receptor?.nequi && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
+                    borderRadius: 12, background: 'rgba(255,107,157,0.05)', border: '1px solid var(--border)',
+                  }}>
+                    <span style={{ fontSize: 20, flexShrink: 0 }}>📱</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 700, letterSpacing: '0.5px' }}>NEQUI / DAVIPLATA</p>
+                      <p style={{ fontSize: 15, fontWeight: 700, marginTop: 1 }}>{receptor.nequi}</p>
+                    </div>
+                    <button
+                      onClick={() => copiar(receptor.nequi, 'nequi')}
+                      style={{
+                        fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 8,
+                        border: 'none', cursor: 'pointer', fontFamily: 'var(--font)', whiteSpace: 'nowrap',
+                        background: copiado === 'nequi' ? 'var(--teal)' : 'var(--accent-bg)',
+                        color: copiado === 'nequi' ? 'white' : 'var(--accent)',
+                        transition: 'background 0.2s, color 0.2s',
+                      }}
+                    >
+                      {copiado === 'nequi' ? '✓ Copiado' : 'Copiar'}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        ) : (
+
+            {/* ── Tab Bancolombia ── */}
+            {(tab === 'bancolombia' || !hasNequi) && hasBancolombia && (
+              <div style={{ marginBottom: '1.25rem' }}>
+                {receptor?.qr_bancolombia_url ? (
+                  <div style={{ textAlign: 'center', marginBottom: 14 }}>
+                    <img
+                      src={receptor.qr_bancolombia_url}
+                      alt="QR Bancolombia"
+                      style={{ width: 180, height: 180, objectFit: 'contain', borderRadius: 16, border: '2px solid rgba(99,102,241,0.3)', background: 'white' }}
+                    />
+                    <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 8 }}>QR Bancolombia · {receptor.nombre}</p>
+                  </div>
+                ) : null}
+
+                {receptor?.cuenta_bancaria && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
+                    borderRadius: 12, background: 'rgba(99,102,241,0.05)', border: '1px solid var(--border)',
+                  }}>
+                    <span style={{ fontSize: 20, flexShrink: 0 }}>🏦</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 700, letterSpacing: '0.5px' }}>CUENTA BANCARIA</p>
+                      <p style={{ fontSize: 15, fontWeight: 700, marginTop: 1 }}>{receptor.cuenta_bancaria}</p>
+                    </div>
+                    <button
+                      onClick={() => copiar(receptor.cuenta_bancaria, 'banco')}
+                      style={{
+                        fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 8,
+                        border: 'none', cursor: 'pointer', fontFamily: 'var(--font)', whiteSpace: 'nowrap',
+                        background: copiado === 'banco' ? 'var(--teal)' : 'var(--blue-bg)',
+                        color: copiado === 'banco' ? 'white' : 'var(--blue)',
+                        transition: 'background 0.2s, color 0.2s',
+                      }}
+                    >
+                      {copiado === 'banco' ? '✓ Copiado' : 'Copiar'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Sin datos de pago */}
+        {!hasNequi && !hasBancolombia && (
           <div style={{
             marginBottom: '1.25rem', padding: '12px 14px', borderRadius: 12,
             background: 'var(--gray-bg)', fontSize: 13, color: 'var(--gray)',
@@ -309,6 +335,10 @@ export default function Balance() {
   const { pagado, net, transferencias } = personas.length
     ? calcBalance()
     : { pagado: [], net: [], transferencias: [] }
+
+  const transferenciasPorPersona = personas.map(p =>
+    pagos.filter(pg => pg.de_persona_id === p.id).reduce((s, pg) => s + Number(pg.monto), 0)
+  )
 
   const eliminarPago = async (id) => {
     await supabase.from('pagos').delete().eq('id', id)
@@ -449,7 +479,12 @@ export default function Balance() {
                     <div>
                       <p style={{ fontSize: 14, fontWeight: 700 }}>{p.nombre}</p>
                       <p style={{ fontSize: 12, color: 'var(--text2)', marginTop: 2, fontWeight: 500 }}>
-                        Pagó {fmt(pagado[i] || 0)} este mes
+                        {pagado[i] > 0
+                          ? <>Pagó <strong>{fmt(pagado[i])}</strong> en gastos</>
+                          : 'No pagó gastos directos'}
+                        {transferenciasPorPersona[i] > 0 && (
+                          <span style={{ color: 'var(--teal)' }}> · Transfirió {fmt(transferenciasPorPersona[i])}</span>
+                        )}
                       </p>
                     </div>
                   </div>
