@@ -145,15 +145,14 @@ export default function PresupuestoPersonal() {
     if (presupuesto?.id) {
       await supabase.from('presupuestos_personales').update({ monto: val }).eq('id', presupuesto.id)
     } else {
-      const { data } = await supabase.from('presupuestos_personales').insert([{
+      await supabase.from('presupuestos_personales').insert([{
         usuario_id: user.id, mes, descripcion: '__budget__', monto: val,
-      }]).select().single()
-      if (data) setPresupuesto(data)
+      }])
     }
+    await cargarPresupuesto()
     setSavingBudget(false)
     setMsgBudget({ tipo: 'ok', texto: 'Presupuesto guardado ✦' })
     setTimeout(() => setMsgBudget(null), 2200)
-    cargarPresupuesto()
   }
 
   const quitarFactura = () => {

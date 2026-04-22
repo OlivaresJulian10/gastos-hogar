@@ -204,4 +204,28 @@ export const supabase = createClient(supabaseUrl, supabaseKey)
   ALTER TABLE gastos_personales ENABLE ROW LEVEL SECURITY;
   DROP POLICY IF EXISTS "gp_privado" ON gastos_personales;
   CREATE POLICY "gp_privado" ON gastos_personales FOR ALL USING (auth.uid() = usuario_id);
+
+  ── DATOS DE PAGO EN PERSONAS ─────────────────────────────────
+
+  ALTER TABLE personas ADD COLUMN IF NOT EXISTS nequi text;
+  ALTER TABLE personas ADD COLUMN IF NOT EXISTS cuenta_bancaria text;
+
+  ── PAGOS ENTRE PERSONAS ──────────────────────────────────────
+
+  CREATE TABLE IF NOT EXISTS pagos (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    de_persona_id uuid REFERENCES personas(id) NOT NULL,
+    a_persona_id  uuid REFERENCES personas(id) NOT NULL,
+    monto numeric(12,2) NOT NULL,
+    mes text NOT NULL,
+    fecha date NOT NULL DEFAULT CURRENT_DATE,
+    notas text,
+    created_at timestamptz DEFAULT now()
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_pagos_mes ON pagos(mes);
+
+  ALTER TABLE pagos ENABLE ROW LEVEL SECURITY;
+  DROP POLICY IF EXISTS "pagos_autenticados" ON pagos;
+  CREATE POLICY "pagos_autenticados" ON pagos FOR ALL USING (auth.role() = 'authenticated');
 */
