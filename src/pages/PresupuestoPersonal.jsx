@@ -120,7 +120,6 @@ export default function PresupuestoPersonal() {
       .select('*')
       .eq('usuario_id', user.id)
       .eq('mes', mes)
-      .eq('descripcion', '__budget__')
       .maybeSingle()
     setPresupuesto(data || null)
     setPresupuestoInput(data ? String(data.monto) : '')
@@ -147,17 +146,12 @@ export default function PresupuestoPersonal() {
     }
     setSavingBudget(true); setMsgBudget(null)
 
-    let error
-    if (presupuesto?.id) {
-      ;({ error } = await supabase
-        .from('presupuestos_personales')
-        .update({ monto: val })
-        .eq('id', presupuesto.id))
-    } else {
-      ;({ error } = await supabase
-        .from('presupuestos_personales')
-        .insert([{ usuario_id: user.id, mes, descripcion: '__budget__', monto: val }]))
-    }
+    const { error } = await supabase
+      .from('presupuestos_personales')
+      .upsert(
+        { usuario_id: user.id, mes, descripcion: 'presupuesto', monto: val },
+        { onConflict: 'usuario_id,mes' }
+      )
 
     if (error) {
       setMsgBudget({ tipo: 'error', texto: 'Error al guardar: ' + error.message })
