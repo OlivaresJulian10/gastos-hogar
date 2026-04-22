@@ -127,13 +127,17 @@ export default function PresupuestoPersonal() {
   }
 
   async function cargarGastos() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('gastos_personales')
       .select('*')
       .eq('usuario_id', user.id)
       .eq('mes', mes)
       .order('fecha', { ascending: false })
-    setGastos(data || [])
+    if (error) {
+      setMsgGasto({ tipo: 'error', texto: 'La tabla gastos_personales no existe aún. Ejecuta el SQL en Supabase.' })
+    } else {
+      setGastos(data || [])
+    }
   }
 
   const guardarPresupuesto = async () => {
@@ -142,13 +146,24 @@ export default function PresupuestoPersonal() {
       setMsgBudget({ tipo: 'error', texto: 'Ingresa un monto válido mayor a cero.' }); return
     }
     setSavingBudget(true); setMsgBudget(null)
+
+    let error
     if (presupuesto?.id) {
-      await supabase.from('presupuestos_personales').update({ monto: val }).eq('id', presupuesto.id)
+      ;({ error } = await supabase
+        .from('presupuestos_personales')
+        .update({ monto: val })
+        .eq('id', presupuesto.id))
     } else {
-      await supabase.from('presupuestos_personales').insert([{
-        usuario_id: user.id, mes, descripcion: '__budget__', monto: val,
-      }])
+      ;({ error } = await supabase
+        .from('presupuestos_personales')
+        .insert([{ usuario_id: user.id, mes, descripcion: '__budget__', monto: val }]))
     }
+
+    if (error) {
+      setMsgBudget({ tipo: 'error', texto: 'Error al guardar: ' + error.message })
+      setSavingBudget(false); return
+    }
+
     await cargarPresupuesto()
     setSavingBudget(false)
     setMsgBudget({ tipo: 'ok', texto: 'Presupuesto guardado ✦' })

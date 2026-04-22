@@ -81,6 +81,10 @@ export default function Presupuesto() {
       .upsert({ mes, monto: val, updated_at: new Date().toISOString() }, { onConflict: 'mes' })
     if (error) { setMsg({ tipo: 'error', texto: 'Error: ' + error.message }); return }
     setPresupuestosPorMes(p => ({ ...p, [mes]: val }))
+    // Reload gastos del mes seleccionado para mostrar barra actualizada
+    supabase.from('gastos').select('mes,monto').eq('mes', mes).then(({ data: g }) => {
+      if (g) setGastosPorMes(prev => ({ ...prev, [mes]: g.reduce((s, x) => s + Number(x.monto), 0) }))
+    })
     setMsg({ tipo: 'ok', texto: '¡Presupuesto guardado! ✦' })
     setTimeout(() => setMsg(null), 3000)
   }
@@ -145,6 +149,28 @@ export default function Presupuesto() {
           >
             ✦ Guardar presupuesto
           </button>
+
+          {/* Resumen del mes seleccionado */}
+          {presupuestosPorMes[mes] > 0 && (
+            <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border)' }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '0.9rem' }}>
+                Resumen · {format(new Date(mes + '-01'), 'MMMM yyyy', { locale: es })}
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: '0.9rem' }}>
+                {[
+                  { label: 'Presupuesto', value: fmt(presupuestosPorMes[mes]), color: 'var(--blue)' },
+                  { label: 'Gastado',     value: fmt(gastosPorMes[mes] || 0),  color: (gastosPorMes[mes] || 0) > presupuestosPorMes[mes] ? 'var(--red)' : 'var(--teal)' },
+                  { label: 'Disponible',  value: fmt(Math.max(0, presupuestosPorMes[mes] - (gastosPorMes[mes] || 0))), color: 'var(--accent)' },
+                ].map(s => (
+                  <div key={s.label} style={{ textAlign: 'center', padding: '10px 6px', borderRadius: 12, background: 'linear-gradient(135deg,rgba(255,107,157,0.05),rgba(168,85,247,0.05))', border: '1px solid var(--border)' }}>
+                    <p style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: 5 }}>{s.label}</p>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: s.color }}>{s.value}</p>
+                  </div>
+                ))}
+              </div>
+              <ProgressBar gastado={gastosPorMes[mes] || 0} presupuesto={presupuestosPorMes[mes]} />
+            </div>
+          )}
         </div>
       </Card>
 

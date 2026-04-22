@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { QRCodeSVG } from 'qrcode.react'
 import { supabase } from '../lib/supabase'
 import { Card, PageTitle, MetricCard, Avatar, fmt } from '../components/UI'
 import { format } from 'date-fns'
@@ -8,10 +9,11 @@ const mesActual = format(new Date(), 'yyyy-MM')
 
 /* ── Modal de pago ───────────────────────────────────────────── */
 function PagoModal({ transfer, personas, mes, onPagado, onClose }) {
-  const pagador = personas[transfer.de]
+  const pagador  = personas[transfer.de]
   const receptor = personas[transfer.a]
   const [registrando, setRegistrando] = useState(false)
-  const [copiado, setCopiado] = useState(null)
+  const [copiado, setCopiado]         = useState(null)
+  const [pagado, setPagado]           = useState(false)
 
   useEffect(() => {
     const h = e => { if (e.key === 'Escape') onClose() }
@@ -29,17 +31,53 @@ function PagoModal({ transfer, personas, mes, onPagado, onClose }) {
     setRegistrando(true)
     const { data } = await supabase.from('pagos').insert([{
       de_persona_id: pagador.id,
-      a_persona_id: receptor.id,
+      a_persona_id:  receptor.id,
       monto: transfer.monto,
       mes,
       fecha: format(new Date(), 'yyyy-MM-dd'),
     }]).select().single()
     setRegistrando(false)
+    setPagado(true)
     onPagado(data)
-    onClose()
+    setTimeout(onClose, 1800)
   }
 
-  const tieneDatos = receptor?.nequi || receptor?.cuenta_bancaria
+  // Contenido del QR: si tiene Nequi, intentamos deep link; si no, texto formateado
+  const qrValue = receptor?.nequi
+    ? `nequi://transferencia?celular=${receptor.nequi.replace(/\D/g, '')}&valor=${Math.round(transfer.monto)}`
+    : [
+        `PAGO HOGAR`,
+        `De: ${pagador?.nombre}`,
+        `Para: ${receptor?.nombre}`,
+        `Monto: ${fmt(transfer.monto)}`,
+        receptor?.cuenta_bancaria ? `Banco: ${receptor.cuenta_bancaria}` : '',
+      ].filter(Boolean).join('\n')
+
+  if (pagado) {
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 9000,
+        background: 'rgba(20,8,45,0.72)', backdropFilter: 'blur(8px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '1.5rem',
+      }}>
+        <div style={{
+          background: 'white', borderRadius: 22, width: '100%', maxWidth: 380,
+          padding: '2.5rem 1.75rem', textAlign: 'center',
+          boxShadow: '0 30px 80px rgba(30,8,69,0.28)',
+        }}>
+          <div style={{ fontSize: 52, marginBottom: '1rem' }}>✅</div>
+          <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, color: 'var(--teal)', marginBottom: 8 }}>
+            ¡Pago registrado!
+          </h2>
+          <p style={{ fontSize: 14, color: 'var(--text2)', fontWeight: 500 }}>
+            La deuda de <strong>{pagador?.nombre}</strong> ha sido saldada.<br />
+            El balance se actualiza automáticamente.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div
@@ -54,32 +92,32 @@ function PagoModal({ transfer, personas, mes, onPagado, onClose }) {
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          background: 'white', borderRadius: 22,
-          width: '100%', maxWidth: 420, padding: '1.75rem',
-          boxShadow: '0 30px 80px rgba(30,8,69,0.28)',
+          background: 'white', borderRadius: 22, width: '100%', maxWidth: 440,
+          maxHeight: '92vh', overflowY: 'auto',
+          padding: '1.75rem', boxShadow: '0 30px 80px rgba(30,8,69,0.28)',
           border: '1px solid rgba(210,100,160,0.15)',
         }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
           <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 20, color: 'var(--text)' }}>Realizar pago</h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'var(--text3)', padding: '2px 6px' }}>✕</button>
         </div>
 
-        {/* Resumen */}
+        {/* Resumen de monto */}
         <div style={{
-          textAlign: 'center', padding: '1.25rem', marginBottom: '1.25rem',
+          textAlign: 'center', padding: '1rem', marginBottom: '1.25rem',
           borderRadius: 16,
           background: 'linear-gradient(135deg,rgba(255,107,157,0.06),rgba(168,85,247,0.06))',
           border: '1px solid var(--border)',
         }}>
-          <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 8, fontWeight: 500 }}>
+          <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 6, fontWeight: 500 }}>
             <strong style={{ color: 'var(--text)' }}>{pagador?.nombre}</strong>
-            {' '}paga a{' '}
+            {' '}→{' '}
             <strong style={{ color: 'var(--text)' }}>{receptor?.nombre}</strong>
           </p>
           <p style={{
-            fontSize: 36, fontWeight: 700,
+            fontSize: 34, fontWeight: 700,
             background: 'linear-gradient(135deg,#FF6B9D,#A855F7)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
           }}>
@@ -87,33 +125,58 @@ function PagoModal({ transfer, personas, mes, onPagado, onClose }) {
           </p>
         </div>
 
+        {/* QR Code */}
+        <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: 12 }}>
+            {receptor?.nequi ? 'Escanea con Nequi para pagar' : 'Código QR con datos de pago'}
+          </p>
+          <div style={{
+            display: 'inline-block', padding: 14, borderRadius: 16,
+            background: 'white', border: '2px solid var(--border)',
+            boxShadow: '0 4px 20px rgba(168,85,247,0.12)',
+          }}>
+            <QRCodeSVG
+              value={qrValue}
+              size={170}
+              level="M"
+              fgColor="#2A1040"
+              bgColor="white"
+            />
+          </div>
+          {receptor?.nequi && (
+            <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 8 }}>
+              Abre Nequi → Escanear → apunta la cámara al QR
+            </p>
+          )}
+        </div>
+
         {/* Datos de pago */}
-        {tieneDatos ? (
-          <div style={{ marginBottom: '1.5rem' }}>
+        {(receptor?.nequi || receptor?.cuenta_bancaria) ? (
+          <div style={{ marginBottom: '1.25rem' }}>
             <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: 10 }}>
-              Cuentas de {receptor?.nombre}
+              O ingresa manualmente
             </p>
 
             {receptor.nequi && (
               <div style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px',
+                display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
                 borderRadius: 12, marginBottom: 8,
                 background: 'linear-gradient(135deg,rgba(255,107,157,0.05),rgba(168,85,247,0.05))',
                 border: '1px solid var(--border)',
               }}>
-                <span style={{ fontSize: 22, flexShrink: 0 }}>📱</span>
+                <span style={{ fontSize: 20, flexShrink: 0 }}>📱</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 700, letterSpacing: '0.5px' }}>NEQUI / DAVIPLATA</p>
-                  <p style={{ fontSize: 15, fontWeight: 700, marginTop: 2 }}>{receptor.nequi}</p>
+                  <p style={{ fontSize: 15, fontWeight: 700, marginTop: 1 }}>{receptor.nequi}</p>
                 </div>
                 <button
                   onClick={() => copiar(receptor.nequi, 'nequi')}
                   style={{
-                    fontSize: 12, fontWeight: 700, padding: '6px 13px', borderRadius: 8,
-                    border: 'none', cursor: 'pointer', fontFamily: 'var(--font)',
+                    fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 8,
+                    border: 'none', cursor: 'pointer', fontFamily: 'var(--font)', whiteSpace: 'nowrap',
                     background: copiado === 'nequi' ? 'var(--teal)' : 'var(--accent-bg)',
                     color: copiado === 'nequi' ? 'white' : 'var(--accent)',
-                    transition: 'background 0.2s, color 0.2s', whiteSpace: 'nowrap',
+                    transition: 'background 0.2s, color 0.2s',
                   }}
                 >
                   {copiado === 'nequi' ? '✓ Copiado' : 'Copiar'}
@@ -123,24 +186,24 @@ function PagoModal({ transfer, personas, mes, onPagado, onClose }) {
 
             {receptor.cuenta_bancaria && (
               <div style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px',
+                display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
                 borderRadius: 12,
                 background: 'linear-gradient(135deg,rgba(99,102,241,0.05),rgba(168,85,247,0.05))',
                 border: '1px solid var(--border)',
               }}>
-                <span style={{ fontSize: 22, flexShrink: 0 }}>🏦</span>
+                <span style={{ fontSize: 20, flexShrink: 0 }}>🏦</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 700, letterSpacing: '0.5px' }}>CUENTA BANCARIA</p>
-                  <p style={{ fontSize: 15, fontWeight: 700, marginTop: 2 }}>{receptor.cuenta_bancaria}</p>
+                  <p style={{ fontSize: 15, fontWeight: 700, marginTop: 1 }}>{receptor.cuenta_bancaria}</p>
                 </div>
                 <button
                   onClick={() => copiar(receptor.cuenta_bancaria, 'banco')}
                   style={{
-                    fontSize: 12, fontWeight: 700, padding: '6px 13px', borderRadius: 8,
-                    border: 'none', cursor: 'pointer', fontFamily: 'var(--font)',
+                    fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 8,
+                    border: 'none', cursor: 'pointer', fontFamily: 'var(--font)', whiteSpace: 'nowrap',
                     background: copiado === 'banco' ? 'var(--teal)' : 'var(--blue-bg)',
                     color: copiado === 'banco' ? 'white' : 'var(--blue)',
-                    transition: 'background 0.2s, color 0.2s', whiteSpace: 'nowrap',
+                    transition: 'background 0.2s, color 0.2s',
                   }}
                 >
                   {copiado === 'banco' ? '✓ Copiado' : 'Copiar'}
@@ -150,13 +213,12 @@ function PagoModal({ transfer, personas, mes, onPagado, onClose }) {
           </div>
         ) : (
           <div style={{
-            marginBottom: '1.5rem', padding: '13px 16px', borderRadius: 12,
+            marginBottom: '1.25rem', padding: '12px 14px', borderRadius: 12,
             background: 'var(--gray-bg)', fontSize: 13, color: 'var(--gray)',
             fontWeight: 500, textAlign: 'center',
           }}>
-            {receptor?.nombre} no tiene datos de pago registrados.
-            <br />
-            <span style={{ fontSize: 12 }}>Agrégalos en la página Personas ⊙</span>
+            {receptor?.nombre} no tiene datos de pago aún.
+            <br /><span style={{ fontSize: 12 }}>Agrégalos en Personas ⊙</span>
           </div>
         )}
 
@@ -166,8 +228,11 @@ function PagoModal({ transfer, personas, mes, onPagado, onClose }) {
           className="btn-gradient"
           style={{ width: '100%', padding: '12px', fontSize: 14, boxShadow: '0 6px 20px rgba(168,85,247,0.3)', opacity: registrando ? 0.7 : 1 }}
         >
-          {registrando ? 'Registrando...' : '✓ Marcar como pagado'}
+          {registrando ? 'Registrando...' : '✓ Ya pagué — Marcar como pagado'}
         </button>
+        <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text3)', marginTop: 10 }}>
+          Al marcar como pagado, la deuda se descuenta del balance automáticamente
+        </p>
       </div>
     </div>
   )
