@@ -82,7 +82,7 @@ export default function Presupuesto() {
     Promise.all([
       supabase.from('personas').select('*').order('nombre'),
       supabase.from('aportes_presupuesto').select('*').eq('mes', mes),
-      supabase.from('gastos').select('fecha,monto').eq('mes', mes),
+      supabase.from('gastos').select('fecha,monto,pagado_por,descripcion,split_entre').eq('mes', mes),
     ]).then(([{ data: p }, { data: a }, { data: g }]) => {
       const pers = p || []
       const ap   = a || []
@@ -222,17 +222,72 @@ export default function Presupuesto() {
           )}
         </Card>
 
-        {/* Aportes por persona */}
+        {/* Aportes al presupuesto */}
         <Card>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)', letterSpacing: '0.3px' }}>
-              ¿Cuánto aporta cada uno?
+              Aportes al presupuesto
             </p>
             <p style={{ fontSize: 12, color: 'var(--text3)' }}>
-              Total: <strong style={{ color: totalInput > 0 ? 'var(--accent)' : 'var(--text3)' }}>{fmt(totalInput)}</strong>
+              Total: <strong style={{ color: presupuesto > 0 ? 'var(--accent)' : 'var(--text3)' }}>{fmt(presupuesto)}</strong>
             </p>
           </div>
 
+          {/* Aportes guardados en DB */}
+          {presupuesto > 0 && (
+            <div style={{ marginBottom: '1.25rem' }}>
+              <p style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: 8 }}>
+                Quiénes han aportado
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {personas.map((p, i) => {
+                  const aporte = getAporte(p.id, q)
+                  if (!aporte) return null
+                  const pct = presupuesto > 0 ? Math.round((aporte / presupuesto) * 100) : 0
+                  const colors = ['#FF6B9D', '#A855F7', '#6366F1', '#14B8A6', '#FB923C', '#F43F5E']
+                  return (
+                    <div key={p.id} style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '9px 12px', borderRadius: 11,
+                      background: 'linear-gradient(135deg,rgba(255,107,157,0.04),rgba(168,85,247,0.04))',
+                      border: `1.5px solid ${colors[i % colors.length]}30`,
+                    }}>
+                      <Avatar nombre={p.nombre} index={i} />
+                      <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{p.nombre}</span>
+                      <span style={{ fontSize: 11, color: colors[i % colors.length], fontWeight: 700, marginRight: 6 }}>
+                        {pct}%
+                      </span>
+                      <span style={{ fontSize: 15, fontWeight: 700, color: colors[i % colors.length] }}>
+                        {fmt(aporte)}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Barra de distribución */}
+              <div style={{ marginTop: 10 }}>
+                <div style={{ display: 'flex', borderRadius: 99, height: 7, overflow: 'hidden', marginBottom: 4 }}>
+                  {personas.map((p, i) => {
+                    const aporte = getAporte(p.id, q)
+                    const pct = presupuesto > 0 ? (aporte / presupuesto) * 100 : 0
+                    const colors = ['#FF6B9D', '#A855F7', '#6366F1', '#14B8A6', '#FB923C', '#F43F5E']
+                    return pct > 0 ? (
+                      <div key={p.id} style={{ width: `${pct}%`, background: colors[i % colors.length], transition: 'width 0.4s' }} />
+                    ) : null
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Separador */}
+          <div style={{ borderTop: '1px dashed var(--border)', marginBottom: '1rem' }} />
+
+          {/* Formulario de edición */}
+          <p style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: 10 }}>
+            {presupuesto > 0 ? 'Actualizar aportes' : 'Registrar aportes'}
+          </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: '1.1rem' }}>
             {personas.map((p, i) => {
               const key = `${p.id}-${q}`
@@ -261,7 +316,7 @@ export default function Presupuesto() {
             })}
           </div>
 
-          {/* Barra visual de distribución de aportes */}
+          {/* Barra visual del total a guardar */}
           {totalInput > 0 && (
             <div style={{ marginBottom: '1rem' }}>
               <div style={{ display: 'flex', borderRadius: 99, height: 8, overflow: 'hidden', marginBottom: 6 }}>
@@ -300,17 +355,53 @@ export default function Presupuesto() {
           </button>
         </Card>
 
-        {/* Detalle de gastos del período */}
+        {/* Gastos del período con detalle */}
         {(q === 1 ? gastosQ1 : gastosQ2).length > 0 && (
           <Card>
-            <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)', marginBottom: '0.75rem' }}>
-              Gastos del período ({(q === 1 ? gastosQ1 : gastosQ2).length})
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', borderRadius: 10, background: 'linear-gradient(135deg,rgba(255,107,157,0.05),rgba(168,85,247,0.05))', border: '1px solid var(--border)' }}>
-              <span style={{ fontSize: 13, color: 'var(--text2)' }}>Total gastado en {rangoLabel}</span>
-              <span style={{ fontSize: 15, fontWeight: 700, color: (q === 1 ? totalQ1 : totalQ2) > (q === 1 ? presQ1 : presQ2) && (q === 1 ? presQ1 : presQ2) > 0 ? 'var(--red)' : 'var(--teal)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)' }}>
+                Gastos del período ({(q === 1 ? gastosQ1 : gastosQ2).length})
+              </p>
+              <span style={{ fontSize: 15, fontWeight: 700, color: (q === 1 ? totalQ1 : totalQ2) > presupuesto && presupuesto > 0 ? 'var(--red)' : 'var(--teal)' }}>
                 {fmt(q === 1 ? totalQ1 : totalQ2)}
               </span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {(q === 1 ? gastosQ1 : gastosQ2).map((g, idx) => {
+                const pagador = personas.find(p => p.id === g.pagado_por)
+                const pIdx = personas.findIndex(p => p.id === g.pagado_por)
+                const splitNombres = (g.split_entre || [])
+                  .map(id => personas.find(p => p.id === id)?.nombre?.split(' ')[0])
+                  .filter(Boolean).join(', ')
+                const gastosPer = q === 1 ? gastosQ1 : gastosQ2
+                return (
+                  <div key={g.id || idx} style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '9px 12px', borderRadius: 11,
+                    background: 'linear-gradient(135deg,rgba(255,107,157,0.03),rgba(168,85,247,0.03))',
+                    border: '1px solid var(--border)',
+                    borderBottom: idx < gastosPer.length - 1 ? undefined : undefined,
+                  }}>
+                    <Avatar nombre={pagador?.nombre} index={pIdx >= 0 ? pIdx : 0} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+                        {g.descripcion || '—'}
+                      </p>
+                      <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>
+                        Pagó: <strong style={{ color: 'var(--text2)' }}>{pagador?.nombre || '—'}</strong>
+                        {splitNombres && (
+                          <> · Entre: <span style={{ color: 'var(--text3)' }}>{splitNombres}</span></>
+                        )}
+                        <span style={{ marginLeft: 6, color: 'var(--text3)' }}>· {g.fecha}</span>
+                      </p>
+                    </div>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--accent)', flexShrink: 0 }}>
+                      {fmt(g.monto)}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
           </Card>
         )}

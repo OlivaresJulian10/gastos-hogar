@@ -63,6 +63,11 @@ function FacturaPreview({ file, previewUrl, onRemove }) {
   )
 }
 
+function quincenaDeFecha(fechaStr) {
+  const day = parseInt((fechaStr || '').split('-')[2] || '1')
+  return day <= 15 ? 'q1' : 'q2'
+}
+
 export default function Registrar() {
   const { user, perfil, recargarPerfil } = useAuth()
   const [personas, setPersonas] = useState([])
@@ -71,6 +76,7 @@ export default function Registrar() {
     pagado_por: '', fecha: new Date().toISOString().slice(0, 10),
     split_entre: [], notas: '',
   })
+  const [quincena, setQuincena] = useState(() => quincenaDeFecha(new Date().toISOString().slice(0, 10)))
   const [dividirTodos, setDividirTodos] = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [msg, setMsg] = useState(null)
@@ -91,6 +97,35 @@ export default function Registrar() {
   }, [])
 
   const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+
+  // Helpers para construir la fecha a partir de partes
+  const [fechaY, fechaM, fechaD] = form.fecha.split('-')
+
+  const handleMesChange = e => {
+    if (!e.target.value) return
+    const [ny, nm] = e.target.value.split('-')
+    setForm(f => ({ ...f, fecha: `${ny}-${nm}-${fechaD}` }))
+  }
+
+  const handleDiaChange = e => {
+    const d = String(e.target.value).padStart(2, '0')
+    setForm(f => ({ ...f, fecha: `${fechaY}-${fechaM}-${d}` }))
+    setQuincena(parseInt(d) <= 15 ? 'q1' : 'q2')
+  }
+
+  const cambiarQuincena = (q) => {
+    setQuincena(q)
+    const day = parseInt(fechaD || '1')
+    if (q === 'q1' && day > 15) {
+      setForm(f => ({ ...f, fecha: `${fechaY}-${fechaM}-01` }))
+    } else if (q === 'q2' && day <= 15) {
+      setForm(f => ({ ...f, fecha: `${fechaY}-${fechaM}-16` }))
+    }
+  }
+
+  const minDia = quincena === 'q1' ? 1 : 16
+  const maxDia = quincena === 'q1' ? 15 : 31
+  const diaActual = parseInt(fechaD || '1')
 
   const toggleSplit = id => {
     setForm(f => ({
@@ -182,6 +217,13 @@ export default function Registrar() {
     fontSize: 12, color: 'var(--text2)', marginBottom: 6,
     display: 'block', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase',
   }
+  const qBtn = (active, color) => ({
+    flex: 1, padding: '9px 12px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+    cursor: 'pointer', fontFamily: 'var(--font)', border: 'none',
+    background: active ? (color || 'linear-gradient(135deg,#FF6B9D,#A855F7)') : 'var(--surface2)',
+    color: active ? 'white' : 'var(--text2)',
+    transition: 'all 0.18s', boxShadow: active ? '0 4px 14px rgba(168,85,247,0.28)' : 'none',
+  })
 
   return (
     <div>
@@ -212,8 +254,59 @@ export default function Registrar() {
               placeholder="0" min="0" step="100" style={inp} />
           </div>
           <div>
-            <label style={label}>Fecha</label>
-            <input name="fecha" type="date" value={form.fecha} onChange={handleChange} style={inp} />
+            <label style={label}>Mes</label>
+            <input
+              type="month"
+              value={`${fechaY}-${fechaM}`}
+              onChange={handleMesChange}
+              style={inp}
+            />
+          </div>
+
+          {/* Selector de quincena — prominente, full width */}
+          <div style={{ gridColumn: '1/-1' }}>
+            <label style={label}>Quincena</label>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                type="button"
+                onClick={() => cambiarQuincena('q1')}
+                style={{
+                  ...qBtn(quincena === 'q1', 'linear-gradient(135deg,#FF6B9D,#A855F7)'),
+                  flex: 1, padding: '14px 12px', borderRadius: 13, fontSize: 14,
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                }}
+              >
+                <span style={{ fontSize: 18 }}>1ª Quincena</span>
+                <span style={{ fontSize: 11, opacity: 0.8, fontWeight: 500 }}>Días 1 al 15</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => cambiarQuincena('q2')}
+                style={{
+                  ...qBtn(quincena === 'q2', 'linear-gradient(135deg,#6366F1,#A855F7)'),
+                  flex: 1, padding: '14px 12px', borderRadius: 13, fontSize: 14,
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                }}
+              >
+                <span style={{ fontSize: 18 }}>2ª Quincena</span>
+                <span style={{ fontSize: 11, opacity: 0.8, fontWeight: 500 }}>Días 16 al fin de mes</span>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label style={label}>Día del gasto</label>
+            <input
+              type="number"
+              value={diaActual}
+              min={minDia}
+              max={maxDia}
+              onChange={handleDiaChange}
+              style={inp}
+            />
+            <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4, fontWeight: 500 }}>
+              {quincena === 'q1' ? 'Entre 1 y 15' : 'Entre 16 y fin de mes'}
+            </p>
           </div>
           <div>
             <label style={label}>Categoría</label>
