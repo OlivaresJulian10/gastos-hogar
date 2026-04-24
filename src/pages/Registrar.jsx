@@ -5,7 +5,6 @@ import { Card, PageTitle, CATEGORIAS, Avatar } from '../components/UI'
 import { uploadFactura, validateFactura, FACTURA_ACCEPT } from '../lib/uploadFactura'
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
-const AÑOS = [new Date().getFullYear(), new Date().getFullYear() - 1]
 
 const CAT_ICONS = {
   mercado: '🛒', servicios: '💡', arriendo: '🏠', salud: '🏥',
@@ -72,16 +71,47 @@ export default function Registrar() {
 
   const [fechaY, fechaM, fechaD] = form.fecha.split('-')
 
+  // Constraints: can't go past current month
+  const nowRef = new Date()
+  const currentYear  = nowRef.getFullYear()
+  const currentMonth = nowRef.getMonth() + 1
+  const AÑOS_DISP    = [currentYear, currentYear - 1]
+  const maxMesForYear = parseInt(fechaY) >= currentYear ? currentMonth : 12
+  const lastDayOfMonth = new Date(parseInt(fechaY), parseInt(fechaM), 0).getDate()
+
+  // Days available within the selected quincena
+  const diasDisponibles = quincena === 'q1'
+    ? Array.from({ length: 15 }, (_, i) => i + 1)
+    : Array.from({ length: lastDayOfMonth - 15 }, (_, i) => i + 16)
+
   const setFechaParte = (y, m, d) => {
     const newFecha = `${y}-${m}-${d}`
     setForm(f => ({ ...f, fecha: newFecha }))
     setQuincena(quincenaDeFecha(newFecha))
   }
 
-  const handleAnoChange = e => setFechaParte(e.target.value, fechaM, fechaD)
-  const handleMesChange = e => setFechaParte(fechaY, String(e.target.value).padStart(2,'0'), fechaD)
+  const handleAnoChange = e => {
+    const ny = String(e.target.value)
+    // Clamp month if it would be in the future for the new year
+    let nm = fechaM
+    if (parseInt(ny) >= currentYear && parseInt(nm) > currentMonth) {
+      nm = String(currentMonth).padStart(2, '0')
+    }
+    // Clamp day to valid range for new month/year
+    const lastDay = new Date(parseInt(ny), parseInt(nm), 0).getDate()
+    const nd = String(Math.min(parseInt(fechaD), lastDay)).padStart(2, '0')
+    setFechaParte(ny, nm, nd)
+  }
+
+  const handleMesChange = e => {
+    const nm = String(e.target.value).padStart(2, '0')
+    const lastDay = new Date(parseInt(fechaY), parseInt(e.target.value), 0).getDate()
+    const nd = String(Math.min(parseInt(fechaD), lastDay)).padStart(2, '0')
+    setFechaParte(fechaY, nm, nd)
+  }
+
   const handleDiaChange = e => {
-    const d = String(Math.max(parseInt(e.target.value) || 1, 1)).padStart(2,'0')
+    const d = String(parseInt(e.target.value)).padStart(2, '0')
     setFechaParte(fechaY, fechaM, d)
   }
 
@@ -230,8 +260,20 @@ export default function Registrar() {
         }}>
           <p style={{ ...lbl, marginBottom: 12, color: 'var(--accent)', fontSize: 10.5 }}>Fecha del gasto</p>
 
-          {/* Mes + Año */}
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10, marginBottom: 14 }}>
+          {/* Día / Mes / Año — tres selects en una fila */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1.2fr', gap: 10, marginBottom: 14 }}>
+            <div>
+              <label style={lbl}>Día</label>
+              <select
+                value={parseInt(fechaD)}
+                onChange={handleDiaChange}
+                style={{ ...sel, boxSizing: 'border-box', textAlign: 'center', fontWeight: 700, fontSize: 15 }}
+              >
+                {diasDisponibles.map(d => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
             <div>
               <label style={lbl}>Mes</label>
               <select
@@ -239,7 +281,9 @@ export default function Registrar() {
                 onChange={handleMesChange}
                 style={{ ...sel, boxSizing: 'border-box' }}
               >
-                {MESES.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+                {MESES.slice(0, maxMesForYear).map((m, i) => (
+                  <option key={i} value={i + 1}>{m}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -249,7 +293,7 @@ export default function Registrar() {
                 onChange={handleAnoChange}
                 style={{ ...sel, boxSizing: 'border-box' }}
               >
-                {AÑOS.map(y => <option key={y} value={y}>{y}</option>)}
+                {AÑOS_DISP.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
             </div>
           </div>
@@ -260,59 +304,47 @@ export default function Registrar() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {[
                 { q: 'q1', label: '1ª Quincena', sub: 'Días 1 al 15', grad: 'linear-gradient(135deg,#FF6B9D,#A855F7)' },
-                { q: 'q2', label: '2ª Quincena', sub: 'Días 16 al fin', grad: 'linear-gradient(135deg,#6366F1,#A855F7)' },
+                { q: 'q2', label: '2ª Quincena', sub: `Días 16 al ${lastDayOfMonth}`, grad: 'linear-gradient(135deg,#6366F1,#A855F7)' },
               ].map(({ q, label, sub, grad }) => (
                 <button
                   key={q}
                   type="button"
                   onClick={() => cambiarQuincena(q)}
                   style={{
-                    padding: '13px 10px', borderRadius: 12, border: 'none',
+                    padding: '13px 10px', borderRadius: 12,
                     cursor: 'pointer', fontFamily: 'var(--font)',
                     background: quincena === q ? grad : 'var(--surface)',
                     color: quincena === q ? 'white' : 'var(--text2)',
-                    boxShadow: quincena === q ? '0 4px 18px rgba(168,85,247,0.3)' : '0 1px 4px rgba(0,0,0,0.06)',
-                    border: quincena === q ? 'none' : '1.5px solid var(--border-strong)',
+                    boxShadow: quincena === q ? '0 4px 18px rgba(168,85,247,0.3)' : 'none',
+                    border: quincena === q ? '2px solid transparent' : '1.5px solid var(--border-strong)',
                     transition: 'all 0.2s',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
                   }}
                 >
                   <span style={{ fontSize: 14, fontWeight: 700 }}>{label}</span>
-                  <span style={{ fontSize: 11, opacity: 0.8, fontWeight: 500 }}>{sub}</span>
+                  <span style={{ fontSize: 11, opacity: 0.85, fontWeight: 500 }}>{sub}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Día */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10, alignItems: 'end' }}>
+          {/* Resumen de fecha */}
+          <div style={{
+            padding: '10px 14px', borderRadius: 11,
+            background: quincena === 'q1'
+              ? 'linear-gradient(135deg,rgba(255,107,157,0.1),rgba(168,85,247,0.06))'
+              : 'linear-gradient(135deg,rgba(99,102,241,0.1),rgba(168,85,247,0.06))',
+            border: `1.5px solid ${quincena === 'q1' ? 'rgba(255,107,157,0.3)' : 'rgba(99,102,241,0.3)'}`,
+            display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <span style={{ fontSize: 22 }}>📅</span>
             <div>
-              <label style={lbl}>Día</label>
-              <input
-                type="number"
-                value={parseInt(fechaD)}
-                min={quincena === 'q1' ? 1 : 16}
-                max={quincena === 'q1' ? 15 : 31}
-                onChange={handleDiaChange}
-                style={{ ...inp, width: '100%', boxSizing: 'border-box', textAlign: 'center', fontSize: 16, fontWeight: 700 }}
-              />
-            </div>
-            {/* Resumen de fecha */}
-            <div style={{
-              padding: '11px 14px', borderRadius: 11,
-              background: quincena === 'q1'
-                ? 'linear-gradient(135deg,rgba(255,107,157,0.1),rgba(168,85,247,0.08))'
-                : 'linear-gradient(135deg,rgba(99,102,241,0.1),rgba(168,85,247,0.08))',
-              border: `1.5px solid ${quincena === 'q1' ? 'rgba(255,107,157,0.25)' : 'rgba(99,102,241,0.25)'}`,
-            }}>
-              <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: 3 }}>
-                Fecha confirmada
-              </p>
-              <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
                 {fechaLegible(form.fecha)}
               </p>
-              <p style={{ fontSize: 11, color: quincena === 'q1' ? '#FF6B9D' : '#6366F1', fontWeight: 600, marginTop: 2 }}>
-                {quincena === 'q1' ? '1ª Quincena' : '2ª Quincena'}
+              <p style={{ fontSize: 11, fontWeight: 600, marginTop: 2,
+                color: quincena === 'q1' ? '#FF6B9D' : '#6366F1' }}>
+                {quincena === 'q1' ? '1ª Quincena' : '2ª Quincena'} · {MESES[parseInt(fechaM) - 1]} {fechaY}
               </p>
             </div>
           </div>
