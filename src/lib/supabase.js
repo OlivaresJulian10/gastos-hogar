@@ -205,6 +205,25 @@ export const supabase = createClient(supabaseUrl, supabaseKey)
   DROP POLICY IF EXISTS "gp_privado" ON gastos_personales;
   CREATE POLICY "gp_privado" ON gastos_personales FOR ALL USING (auth.uid() = usuario_id);
 
+  ── APORTES PRESUPUESTO QUINCENAL ────────────────────────────
+
+  -- Aportes por persona por quincena (quincena 1=1-15, 2=16-fin)
+  CREATE TABLE IF NOT EXISTS aportes_presupuesto (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    mes text NOT NULL,
+    quincena integer NOT NULL CHECK (quincena IN (1, 2)),
+    persona_id uuid REFERENCES personas(id) ON DELETE CASCADE NOT NULL,
+    monto numeric(12,2) NOT NULL DEFAULT 0,
+    updated_at timestamptz DEFAULT now(),
+    UNIQUE(mes, quincena, persona_id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_ap_mes ON aportes_presupuesto(mes);
+
+  ALTER TABLE aportes_presupuesto ENABLE ROW LEVEL SECURITY;
+  DROP POLICY IF EXISTS "aportes_autenticados" ON aportes_presupuesto;
+  CREATE POLICY "aportes_autenticados" ON aportes_presupuesto FOR ALL USING (auth.role() = 'authenticated');
+
   ── DATOS DE PAGO EN PERSONAS ─────────────────────────────────
 
   ALTER TABLE personas ADD COLUMN IF NOT EXISTS nequi text;
