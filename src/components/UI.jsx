@@ -7,30 +7,39 @@ export function Card({ children, style = {}, noPad = false }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: 'rgba(255,255,255,0.91)',
-        backdropFilter: 'blur(36px)',
-        WebkitBackdropFilter: 'blur(36px)',
-        border: '1px solid rgba(255,255,255,0.60)',
+        background: 'rgba(255,255,255,0.93)',
+        backdropFilter: 'blur(40px)',
+        WebkitBackdropFilter: 'blur(40px)',
+        border: `1px solid rgba(255,255,255,${hovered ? '0.82' : '0.58'})`,
         borderRadius: 'var(--radius-lg)',
         padding: noPad ? 0 : '1.5rem',
         boxShadow: hovered
-          ? '0 28px 72px rgba(0,0,0,0.28), 0 2px 0 rgba(255,255,255,0.7) inset'
-          : '0 8px 40px rgba(0,0,0,0.18), 0 1px 0 rgba(255,255,255,0.65) inset',
-        transform: hovered ? 'translateY(-5px)' : 'translateY(0)',
-        transition: 'transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease',
+          ? '0 32px 80px rgba(0,0,0,0.30), 0 2px 0 rgba(255,255,255,0.75) inset'
+          : '0 8px 40px rgba(0,0,0,0.20), 0 1px 0 rgba(255,255,255,0.68) inset',
+        transform: hovered ? 'translateY(-6px)' : 'translateY(0)',
+        transition: 'transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease, border-color 0.25s ease',
+        position: 'relative', overflow: 'hidden',
         ...style,
       }}
     >
+      {hovered && (
+        <div aria-hidden="true" style={{
+          position: 'absolute', top: 0, left: '-80%', bottom: 0, width: '55%',
+          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent)',
+          animation: 'cardShimmer 0.65s ease-out forwards',
+          pointerEvents: 'none', zIndex: 0,
+        }} />
+      )}
       {children}
     </div>
   )
 }
 
 const ACCENT_COLORS = [
-  'linear-gradient(135deg,#FF6B9D,#C026D3)',
-  'linear-gradient(135deg,#6366F1,#A855F7)',
-  'linear-gradient(135deg,#FB923C,#F43F5E)',
-  'linear-gradient(135deg,#14B8A6,#6366F1)',
+  'linear-gradient(135deg, #FF6B9D 0%, #C026D3 100%)',
+  'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+  'linear-gradient(135deg, #FB923C 0%, #F43F5E 100%)',
+  'linear-gradient(135deg, #0EA5E9 0%, #14B8A6 100%)',
 ]
 
 export function MetricCard({ label, value, sub, color, accent, index = 0 }) {
@@ -41,47 +50,54 @@ export function MetricCard({ label, value, sub, color, accent, index = 0 }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: 'rgba(255,255,255,0.91)',
-        backdropFilter: 'blur(36px)',
-        WebkitBackdropFilter: 'blur(36px)',
-        border: '1px solid rgba(255,255,255,0.60)',
+        background: grad,
         borderRadius: 'var(--radius-lg)',
-        padding: '1.25rem 1.4rem 1.25rem 1.6rem',
+        padding: '1.5rem 1.6rem',
         boxShadow: hovered
-          ? '0 28px 72px rgba(0,0,0,0.28), 0 2px 0 rgba(255,255,255,0.7) inset'
-          : '0 8px 40px rgba(0,0,0,0.18), 0 1px 0 rgba(255,255,255,0.65) inset',
-        transform: hovered ? 'translateY(-5px)' : 'translateY(0)',
-        transition: 'transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease',
+          ? '0 32px 72px rgba(0,0,0,0.40), 0 4px 0 rgba(255,255,255,0.20) inset'
+          : '0 10px 44px rgba(0,0,0,0.32), 0 1px 0 rgba(255,255,255,0.14) inset',
+        transform: hovered ? 'translateY(-8px) scale(1.025)' : 'translateY(0) scale(1)',
+        transition: 'transform 0.32s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.28s ease',
         position: 'relative', overflow: 'hidden',
+        border: '1px solid rgba(255,255,255,0.25)',
+        cursor: 'default',
       }}
     >
-      {/* Left accent bar */}
+      {/* Diagonal shimmer overlay */}
       <div style={{
-        position: 'absolute', left: 0, top: 0, bottom: 0, width: 4,
-        background: grad, borderRadius: '20px 0 0 20px',
+        position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 'inherit',
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 45%, transparent 100%)',
       }} />
-      {/* Soft glow */}
+      {/* Corner glow */}
       <div style={{
-        position: 'absolute', top: -20, right: -20, width: 80, height: 80,
-        borderRadius: '50%', background: grad, opacity: 0.07, filter: 'blur(18px)',
+        position: 'absolute', top: -50, right: -50, width: 140, height: 140,
+        borderRadius: '50%', background: 'rgba(255,255,255,0.26)', filter: 'blur(26px)',
+        pointerEvents: 'none',
+      }} />
+      {/* Bottom decorative circle */}
+      <div style={{
+        position: 'absolute', bottom: -30, left: -20, width: 90, height: 90,
+        borderRadius: '50%', background: 'rgba(0,0,0,0.08)', filter: 'blur(20px)',
         pointerEvents: 'none',
       }} />
       <p style={{
-        fontSize: 10, fontWeight: 800, color: 'var(--text3)',
-        letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: 10,
+        fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.70)',
+        letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 14,
+        position: 'relative',
       }}>
         {label}
       </p>
       <p style={{
-        fontSize: 27, fontWeight: 700,
-        color: color || 'var(--text)',
+        fontSize: 30, fontWeight: 700, color: 'white',
         fontFamily: "'Playfair Display', serif",
-        letterSpacing: '-0.8px', lineHeight: 1.05,
+        letterSpacing: '-1px', lineHeight: 1.0,
+        position: 'relative',
+        textShadow: '0 2px 18px rgba(0,0,0,0.20)',
       }}>
         {value}
       </p>
       {sub && (
-        <p style={{ fontSize: 11.5, color: 'var(--text2)', marginTop: 6, fontWeight: 500 }}>
+        <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.62)', marginTop: 9, fontWeight: 500, position: 'relative' }}>
           {sub}
         </p>
       )}
@@ -167,9 +183,10 @@ export function Avatar({ nombre, index, size = 38 }) {
       width: size, height: size, borderRadius: '50%',
       background: AVATAR_GRADS[index % AVATAR_GRADS.length],
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: size * 0.36, fontWeight: 700, color: 'white',
+      fontSize: size * 0.36, fontWeight: 800, color: 'white',
       flexShrink: 0, letterSpacing: '0.5px',
-      boxShadow: '0 2px 12px rgba(168,85,247,0.28), 0 0 0 2px rgba(255,255,255,0.8)',
+      boxShadow: `0 4px 18px rgba(168,85,247,0.40), 0 0 0 2.5px rgba(255,255,255,0.90)`,
+      textShadow: '0 1px 4px rgba(0,0,0,0.25)',
     }}>
       {(nombre || '?').slice(0, 2).toUpperCase()}
     </div>

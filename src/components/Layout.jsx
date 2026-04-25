@@ -197,6 +197,13 @@ export default function Layout({ children }) {
           background: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\' opacity=\'0.04\'/%3E%3C/svg%3E")',
           opacity: 0.5,
         }} />
+        {/* Bottom ambient glow */}
+        <div aria-hidden="true" style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: 220,
+          background: 'linear-gradient(to top, rgba(255,107,157,0.18) 0%, rgba(168,85,247,0.08) 60%, transparent 100%)',
+          pointerEvents: 'none', zIndex: 0,
+          animation: 'sidebarGlow 4s ease-in-out infinite',
+        }} />
 
         {/* Logo */}
         <div style={{
@@ -204,18 +211,19 @@ export default function Layout({ children }) {
           borderBottom: '1px solid rgba(255,255,255,0.07)',
         }}>
           <div style={{
-            fontSize: 24, fontWeight: 700, color: 'white',
+            fontSize: 26, fontWeight: 700, color: 'white',
             fontFamily: "'Playfair Display', serif", letterSpacing: '-0.3px', lineHeight: 1.2,
           }}>
             Casa{' '}
             <span style={{
-              background: 'linear-gradient(135deg,#FF6B9D,#C026D3)',
+              background: 'linear-gradient(135deg,#FF6B9D,#F0ABFC)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+              filter: 'drop-shadow(0 0 10px rgba(255,107,157,0.65))',
             }}>✦</span>
           </div>
           <div style={{
-            fontSize: 9.5, color: 'rgba(255,255,255,0.38)', fontWeight: 700,
-            marginTop: 5, letterSpacing: '2px', textTransform: 'uppercase',
+            fontSize: 9, color: 'rgba(255,255,255,0.35)', fontWeight: 800,
+            marginTop: 5, letterSpacing: '2.5px', textTransform: 'uppercase',
           }}>
             Control de gastos
           </div>
@@ -245,11 +253,13 @@ export default function Layout({ children }) {
                   fontWeight: isActive ? 700 : 500,
                   color: isActive ? 'white' : 'rgba(255,255,255,0.55)',
                   textDecoration: 'none',
-                  transition: 'all 0.18s ease',
+                  transition: 'all 0.22s ease',
                   background: isActive
-                    ? 'linear-gradient(90deg,rgba(255,107,157,0.28),rgba(168,85,247,0.14))'
+                    ? 'linear-gradient(90deg, rgba(255,107,157,0.36) 0%, rgba(168,85,247,0.22) 100%)'
                     : 'transparent',
-                  boxShadow: isActive ? '0 2px 16px rgba(255,107,157,0.15)' : 'none',
+                  boxShadow: isActive
+                    ? '0 4px 28px rgba(255,107,157,0.32), inset 0 1px 0 rgba(255,255,255,0.10)'
+                    : 'none',
                 }}
                 onMouseEnter={e => { if (!isActive) { e.currentTarget.style.color = 'rgba(255,255,255,0.85)'; e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}}
                 onMouseLeave={e => { if (!isActive) { e.currentTarget.style.color = 'rgba(255,255,255,0.55)'; e.currentTarget.style.background = 'transparent' }}}

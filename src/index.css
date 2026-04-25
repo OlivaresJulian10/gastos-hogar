@@ -119,9 +119,27 @@ input, select, textarea {
 }
 .bubble {
   position: absolute; border-radius: 50%;
-  filter: blur(50px); will-change: transform; pointer-events: none;
+  will-change: transform; pointer-events: none;
 }
 .page-root { position: relative; z-index: 1; }
+
+/* ── Utility animations ─────────────────────────────────────── */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes cardShimmer {
+  from { left: -80%; }
+  to   { left: 120%; }
+}
+@keyframes textGlow {
+  0%, 100% { text-shadow: 0 0 30px rgba(255,107,157,0.45), 0 2px 20px rgba(0,0,0,0.12); }
+  50%       { text-shadow: 0 0 70px rgba(255,107,157,0.80), 0 0 40px rgba(168,85,247,0.45), 0 2px 20px rgba(0,0,0,0.15); }
+}
+@keyframes sidebarGlow {
+  0%, 100% { opacity: 0.55; }
+  50%       { opacity: 0.85; }
+}
 
 /* ── Page transitions ───────────────────────────────────────── */
 @keyframes fadeUp {

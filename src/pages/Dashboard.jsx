@@ -105,32 +105,40 @@ export default function Dashboard() {
 
       {/* ── Banner hero ── */}
       <div style={{
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.06) 100%)',
-        backdropFilter: 'blur(36px)', WebkitBackdropFilter: 'blur(36px)',
-        border: '1px solid rgba(255,255,255,0.22)',
-        borderRadius: 28, padding: '2rem 2.5rem',
-        boxShadow: '0 16px 56px rgba(0,0,0,0.28), 0 1px 0 rgba(255,255,255,0.15) inset',
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.07) 100%)',
+        backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
+        border: '1px solid rgba(255,255,255,0.24)',
+        borderRadius: 28, padding: '2.25rem 2.75rem',
+        boxShadow: '0 20px 64px rgba(0,0,0,0.30), 0 1px 0 rgba(255,255,255,0.18) inset',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 24,
         position: 'relative', overflow: 'hidden',
       }}>
-        {/* Glow decorations */}
-        <div style={{ position: 'absolute', top: -60, right: 60, width: 240, height: 240, borderRadius: '50%', background: 'radial-gradient(circle,rgba(255,107,157,0.30) 0%,transparent 70%)', filter: 'blur(30px)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: -50, right: -30, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle,rgba(99,102,241,0.25) 0%,transparent 70%)', filter: 'blur(25px)', pointerEvents: 'none' }} />
+        {/* Dot grid pattern */}
+        <div aria-hidden="true" style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 'inherit',
+          backgroundImage: 'radial-gradient(rgba(255,255,255,0.14) 1px, transparent 1px)',
+          backgroundSize: '22px 22px',
+        }} />
+        {/* Glow orbs */}
+        <div style={{ position: 'absolute', top: -80, right: 40, width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle,rgba(255,107,157,0.38) 0%,transparent 68%)', filter: 'blur(30px)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: -60, right: -40, width: 240, height: 240, borderRadius: '50%', background: 'radial-gradient(circle,rgba(99,102,241,0.30) 0%,transparent 68%)', filter: 'blur(28px)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '30%', left: '38%', width: 160, height: 160, borderRadius: '50%', background: 'radial-gradient(circle,rgba(168,85,247,0.20) 0%,transparent 68%)', filter: 'blur(22px)', pointerEvents: 'none' }} />
 
         <div style={{ position: 'relative' }}>
-          <p style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.6, marginBottom: 6 }}>
+          <p style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.7, marginBottom: 8 }}>
             <Greeting nombre={perfil?.nombre} />
           </p>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 12px', borderRadius: 20, background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.9)', border: '1px solid rgba(255,255,255,0.25)' }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 13px', borderRadius: 20, background: 'rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.92)', border: '1px solid rgba(255,255,255,0.28)', backdropFilter: 'blur(8px)' }}>
               {gastosMes.length} gastos este mes
             </span>
             {variacion !== null && (
               <span style={{
-                fontSize: 11, fontWeight: 700, padding: '3px 12px', borderRadius: 20,
-                background: variacion > 0 ? 'rgba(244,63,94,0.25)' : 'rgba(20,184,166,0.25)',
+                fontSize: 11, fontWeight: 700, padding: '4px 13px', borderRadius: 20,
+                background: variacion > 0 ? 'rgba(244,63,94,0.28)' : 'rgba(20,184,166,0.28)',
                 color: variacion > 0 ? '#FCA5A5' : '#5EEAD4',
-                border: `1px solid ${variacion > 0 ? 'rgba(244,63,94,0.4)' : 'rgba(20,184,166,0.4)'}`,
+                border: `1px solid ${variacion > 0 ? 'rgba(244,63,94,0.45)' : 'rgba(20,184,166,0.45)'}`,
+                backdropFilter: 'blur(8px)',
               }}>
                 {variacion > 0 ? '↑' : '↓'} {Math.abs(variacion)}% vs mes anterior
               </span>
@@ -139,19 +147,19 @@ export default function Dashboard() {
         </div>
 
         <div style={{ textAlign: 'right', position: 'relative', flexShrink: 0 }}>
-          <p style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.5)', letterSpacing: '1.8px', textTransform: 'uppercase', marginBottom: 6 }}>
+          <p style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.48)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 8 }}>
             Total este mes
           </p>
           <p style={{
-            fontSize: 44, fontWeight: 700, lineHeight: 1,
-            fontFamily: "'Playfair Display', serif", letterSpacing: '-1.5px',
+            fontSize: 52, fontWeight: 700, lineHeight: 1,
+            fontFamily: "'Playfair Display', serif", letterSpacing: '-2px',
             color: 'white',
-            textShadow: '0 2px 24px rgba(255,107,157,0.4)',
+            animation: 'textGlow 4s ease-in-out infinite',
           }}>
             {fmt(totalMes)}
           </p>
           {presupuesto > 0 && (
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 5, fontWeight: 500 }}>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.48)', marginTop: 7, fontWeight: 500 }}>
               de {fmt(presupuesto)} presupuestados
             </p>
           )}
@@ -171,15 +179,15 @@ export default function Dashboard() {
               <span style={{ fontSize: 13, color: 'var(--text3)', marginLeft: 6 }}>/ {fmt(presupuesto)}</span>
             </div>
           </div>
-          <div style={{ background: 'rgba(168,85,247,0.07)', borderRadius: 99, height: 10, overflow: 'hidden' }}>
+          <div style={{ background: 'rgba(168,85,247,0.10)', borderRadius: 99, height: 14, overflow: 'hidden', boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.08)' }}>
             <div style={{
               width: `${pctUsado}%`, height: '100%', borderRadius: 99,
-              background: excedido ? '#F43F5E'
+              background: excedido ? 'linear-gradient(90deg,#F43F5E,#EC4899)'
                 : pctRestante > 50 ? 'linear-gradient(90deg,#14B8A6,#6366F1)'
                 : pctRestante > 25 ? 'linear-gradient(90deg,#F59E0B,#FB923C)'
                 : 'linear-gradient(90deg,#F43F5E,#EC4899)',
-              transition: 'width 0.8s cubic-bezier(0.34,1.56,0.64,1)',
-              boxShadow: `0 0 12px ${barColor}55`,
+              transition: 'width 0.9s cubic-bezier(0.34,1.56,0.64,1)',
+              boxShadow: `0 0 18px ${barColor}70, 0 2px 6px rgba(0,0,0,0.12)`,
             }} />
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 7 }}>
@@ -216,9 +224,12 @@ export default function Dashboard() {
       {/* ── Gráficas ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
         <Card>
-          <p style={{ fontSize: 12, fontWeight: 800, color: 'var(--text3)', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '1rem' }}>
-            Por categoría — mes actual
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1.1rem' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'linear-gradient(135deg,#FF6B9D,#C026D3)', boxShadow: '0 0 8px rgba(255,107,157,0.6)', flexShrink: 0 }} />
+            <p style={{ fontSize: 11, fontWeight: 800, color: 'var(--text3)', letterSpacing: '1px', textTransform: 'uppercase' }}>
+              Por categoría — mes actual
+            </p>
+          </div>
           <div style={{ height: 220 }}>
             <Doughnut
               data={{
@@ -241,9 +252,12 @@ export default function Dashboard() {
         </Card>
 
         <Card>
-          <p style={{ fontSize: 12, fontWeight: 800, color: 'var(--text3)', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '1rem' }}>
-            Tendencia — últimos 6 meses
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1.1rem' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'linear-gradient(135deg,#6366F1,#A855F7)', boxShadow: '0 0 8px rgba(99,102,241,0.6)', flexShrink: 0 }} />
+            <p style={{ fontSize: 11, fontWeight: 800, color: 'var(--text3)', letterSpacing: '1px', textTransform: 'uppercase' }}>
+              Tendencia — últimos 6 meses
+            </p>
+          </div>
           <div style={{ height: 220 }}>
             <Line
               data={{
@@ -267,9 +281,12 @@ export default function Dashboard() {
 
       {/* ── ¿Quién pagó? ── */}
       <Card>
-        <p style={{ fontSize: 12, fontWeight: 800, color: 'var(--text3)', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '1rem' }}>
-          ¿Quién pagó este mes?
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1.1rem' }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'linear-gradient(135deg,#FB923C,#F43F5E)', boxShadow: '0 0 8px rgba(251,146,60,0.6)', flexShrink: 0 }} />
+          <p style={{ fontSize: 11, fontWeight: 800, color: 'var(--text3)', letterSpacing: '1px', textTransform: 'uppercase' }}>
+            ¿Quién pagó este mes?
+          </p>
+        </div>
         <div style={{ height: 180 }}>
           <Bar
             data={{
@@ -291,9 +308,12 @@ export default function Dashboard() {
       {/* ── Últimos gastos ── */}
       <Card>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <p style={{ fontSize: 12, fontWeight: 800, color: 'var(--text3)', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
-            Últimos gastos
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'linear-gradient(135deg,#14B8A6,#6366F1)', boxShadow: '0 0 8px rgba(20,184,166,0.6)', flexShrink: 0 }} />
+            <p style={{ fontSize: 11, fontWeight: 800, color: 'var(--text3)', letterSpacing: '1px', textTransform: 'uppercase' }}>
+              Últimos gastos
+            </p>
+          </div>
           <a href="/historial" style={{ fontSize: 12, color: 'var(--purple)', fontWeight: 700, textDecoration: 'none', opacity: 0.85 }}>
             Ver historial →
           </a>
@@ -325,9 +345,10 @@ export default function Dashboard() {
                 </div>
               </div>
               <span style={{
-                fontWeight: 700, fontSize: 15, flexShrink: 0,
+                fontWeight: 800, fontSize: 15, flexShrink: 0,
                 background: 'linear-gradient(135deg,#FF6B9D,#A855F7)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+                filter: 'drop-shadow(0 1px 3px rgba(255,107,157,0.35))',
               }}>
                 {fmt(g.monto)}
               </span>
