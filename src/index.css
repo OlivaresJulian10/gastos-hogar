@@ -51,7 +51,7 @@ html { background: transparent; }
 
 body {
   font-family: var(--font);
-  background: linear-gradient(145deg, #FBF4FF 0%, #F0E8FF 30%, #FFE4F5 60%, #F5F0FF 100%);
+  background: linear-gradient(145deg, #3B0E72 0%, #5B21B6 28%, #7C3AED 58%, #4C1D95 82%, #2D0A60 100%);
   background-size: 400% 400%;
   animation: meshShift 22s ease-in-out infinite;
   color: var(--text);

@@ -21,10 +21,10 @@ function Greeting({ nombre }) {
   const dia = format(new Date(), "EEEE d 'de' MMMM", { locale: es })
   return (
     <span>
-      <span style={{ color: 'var(--text3)' }}>{saludo},</span>{' '}
-      <strong style={{ color: 'var(--text)' }}>{nombre?.split(' ')[0] || 'bienvenido'}</strong>
+      <span style={{ color: 'rgba(255,255,255,0.58)' }}>{saludo},</span>{' '}
+      <strong style={{ color: 'white', fontWeight: 700 }}>{nombre?.split(' ')[0] || 'bienvenido'}</strong>
       <br />
-      <span style={{ fontSize: 12, color: 'var(--text3)', fontWeight: 500, textTransform: 'capitalize' }}>{dia}</span>
+      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 500, textTransform: 'capitalize' }}>{dia}</span>
     </span>
   )
 }
@@ -52,8 +52,8 @@ export default function Dashboard() {
   }, [user])
 
   if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '3rem 0', color: 'var(--text3)' }}>
-      <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid rgba(168,85,247,0.3)', borderTopColor: '#A855F7', animation: 'spin 0.8s linear infinite' }} />
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '3rem 0', color: 'rgba(255,255,255,0.65)' }}>
+      <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#F0ABFC', animation: 'spin 0.8s linear infinite' }} />
       Cargando dashboard...
     </div>
   )
@@ -103,34 +103,34 @@ export default function Dashboard() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
-      {/* ── Banner de bienvenida ── */}
+      {/* ── Banner hero ── */}
       <div style={{
-        background: 'rgba(255,255,255,0.78)',
-        backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)',
-        border: '1px solid rgba(255,255,255,0.9)',
-        borderRadius: 24, padding: '1.5rem 2rem',
-        boxShadow: '0 4px 24px rgba(168,85,247,0.08)',
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.06) 100%)',
+        backdropFilter: 'blur(36px)', WebkitBackdropFilter: 'blur(36px)',
+        border: '1px solid rgba(255,255,255,0.22)',
+        borderRadius: 28, padding: '2rem 2.5rem',
+        boxShadow: '0 16px 56px rgba(0,0,0,0.28), 0 1px 0 rgba(255,255,255,0.15) inset',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 24,
         position: 'relative', overflow: 'hidden',
       }}>
-        {/* Glow decoration */}
-        <div style={{ position: 'absolute', top: -40, right: 80, width: 180, height: 180, borderRadius: '50%', background: 'linear-gradient(135deg,rgba(255,107,157,0.12),rgba(168,85,247,0.08))', filter: 'blur(30px)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: -30, right: -20, width: 140, height: 140, borderRadius: '50%', background: 'linear-gradient(135deg,rgba(168,85,247,0.1),rgba(99,102,241,0.07))', filter: 'blur(24px)', pointerEvents: 'none' }} />
+        {/* Glow decorations */}
+        <div style={{ position: 'absolute', top: -60, right: 60, width: 240, height: 240, borderRadius: '50%', background: 'radial-gradient(circle,rgba(255,107,157,0.30) 0%,transparent 70%)', filter: 'blur(30px)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: -50, right: -30, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle,rgba(99,102,241,0.25) 0%,transparent 70%)', filter: 'blur(25px)', pointerEvents: 'none' }} />
 
         <div style={{ position: 'relative' }}>
           <p style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.6, marginBottom: 6 }}>
             <Greeting nombre={perfil?.nombre} />
           </p>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 12px', borderRadius: 20, background: 'rgba(168,85,247,0.08)', color: 'var(--purple)', border: '1px solid rgba(168,85,247,0.15)' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 12px', borderRadius: 20, background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.9)', border: '1px solid rgba(255,255,255,0.25)' }}>
               {gastosMes.length} gastos este mes
             </span>
             {variacion !== null && (
               <span style={{
                 fontSize: 11, fontWeight: 700, padding: '3px 12px', borderRadius: 20,
-                background: variacion > 0 ? 'rgba(244,63,94,0.08)' : 'rgba(20,184,166,0.08)',
-                color: variacion > 0 ? 'var(--red)' : 'var(--teal)',
-                border: `1px solid ${variacion > 0 ? 'rgba(244,63,94,0.15)' : 'rgba(20,184,166,0.15)'}`,
+                background: variacion > 0 ? 'rgba(244,63,94,0.25)' : 'rgba(20,184,166,0.25)',
+                color: variacion > 0 ? '#FCA5A5' : '#5EEAD4',
+                border: `1px solid ${variacion > 0 ? 'rgba(244,63,94,0.4)' : 'rgba(20,184,166,0.4)'}`,
               }}>
                 {variacion > 0 ? '↑' : '↓'} {Math.abs(variacion)}% vs mes anterior
               </span>
@@ -139,19 +139,19 @@ export default function Dashboard() {
         </div>
 
         <div style={{ textAlign: 'right', position: 'relative', flexShrink: 0 }}>
-          <p style={{ fontSize: 10, fontWeight: 800, color: 'var(--text3)', letterSpacing: '1.4px', textTransform: 'uppercase', marginBottom: 4 }}>
+          <p style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.5)', letterSpacing: '1.8px', textTransform: 'uppercase', marginBottom: 6 }}>
             Total este mes
           </p>
           <p style={{
-            fontSize: 36, fontWeight: 700, lineHeight: 1,
-            fontFamily: "'Playfair Display', serif", letterSpacing: '-1px',
-            background: 'linear-gradient(135deg,#FF6B9D,#A855F7)',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+            fontSize: 44, fontWeight: 700, lineHeight: 1,
+            fontFamily: "'Playfair Display', serif", letterSpacing: '-1.5px',
+            color: 'white',
+            textShadow: '0 2px 24px rgba(255,107,157,0.4)',
           }}>
             {fmt(totalMes)}
           </p>
           {presupuesto > 0 && (
-            <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4, fontWeight: 500 }}>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 5, fontWeight: 500 }}>
               de {fmt(presupuesto)} presupuestados
             </p>
           )}
@@ -192,15 +192,15 @@ export default function Dashboard() {
       ) : (
         <a href="/presupuesto" style={{
           display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none',
-          background: 'rgba(192,38,211,0.05)', border: '1.5px dashed rgba(192,38,211,0.3)',
+          background: 'rgba(255,255,255,0.09)', border: '1.5px dashed rgba(255,255,255,0.25)',
           borderRadius: 20, padding: '1rem 1.5rem',
-          color: 'var(--accent-text)', fontSize: 13.5, fontWeight: 600,
+          color: 'rgba(255,255,255,0.82)', fontSize: 13.5, fontWeight: 600,
           transition: 'background 0.18s',
         }}>
           <span style={{ fontSize: 22 }}>◐</span>
           <div>
-            <p style={{ fontWeight: 700 }}>Sin presupuesto definido</p>
-            <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2, fontWeight: 500 }}>Toca aquí para configurar el presupuesto del mes →</p>
+            <p style={{ fontWeight: 700, color: 'white' }}>Sin presupuesto definido</p>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2, fontWeight: 500 }}>Toca aquí para configurar el presupuesto del mes →</p>
           </div>
         </a>
       )}

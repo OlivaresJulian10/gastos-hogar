@@ -69,17 +69,17 @@ function TopBar({ perfil, cerrarSesion, navigate }) {
   return (
     <header style={{
       position: 'sticky', top: 0, zIndex: 10,
-      background: 'rgba(255,255,255,0.7)',
-      backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)',
-      borderBottom: '1px solid rgba(220,160,240,0.14)',
+      background: 'rgba(22,6,58,0.62)',
+      backdropFilter: 'blur(32px)', WebkitBackdropFilter: 'blur(32px)',
+      borderBottom: '1px solid rgba(255,255,255,0.10)',
       height: 62,
       display: 'flex', alignItems: 'center',
       padding: '0 2.25rem', gap: 12,
-      boxShadow: '0 1px 24px rgba(168,85,247,0.07)',
+      boxShadow: '0 1px 28px rgba(0,0,0,0.25)',
     }}>
       <span style={{
-        flex: 1, fontSize: 11, fontWeight: 800, color: 'var(--text3)',
-        letterSpacing: '1.5px', textTransform: 'uppercase',
+        flex: 1, fontSize: 11, fontWeight: 800, color: 'rgba(255,255,255,0.55)',
+        letterSpacing: '1.8px', textTransform: 'uppercase',
       }}>
         {pageTitle}
       </span>
@@ -92,17 +92,17 @@ function TopBar({ perfil, cerrarSesion, navigate }) {
               display: 'flex', alignItems: 'center', gap: 9,
               padding: '5px 8px 5px 14px', borderRadius: 50,
               background: open
-                ? 'linear-gradient(135deg,rgba(255,107,157,0.14),rgba(168,85,247,0.12))'
-                : 'rgba(192,38,211,0.05)',
-              border: `1.5px solid ${open ? 'rgba(192,38,211,0.4)' : 'rgba(192,38,211,0.15)'}`,
+                ? 'rgba(255,255,255,0.18)'
+                : 'rgba(255,255,255,0.08)',
+              border: `1.5px solid ${open ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.18)'}`,
               cursor: 'pointer',
               transition: 'all 0.2s ease',
-              boxShadow: open ? '0 0 0 4px rgba(192,38,211,0.08)' : 'none',
+              boxShadow: open ? '0 0 0 4px rgba(255,255,255,0.06)' : 'none',
             }}
-            onMouseEnter={e => { if (!open) { e.currentTarget.style.background = 'rgba(192,38,211,0.09)'; e.currentTarget.style.borderColor = 'rgba(192,38,211,0.3)' }}}
-            onMouseLeave={e => { if (!open) { e.currentTarget.style.background = 'rgba(192,38,211,0.05)'; e.currentTarget.style.borderColor = 'rgba(192,38,211,0.15)' }}}
+            onMouseEnter={e => { if (!open) { e.currentTarget.style.background = 'rgba(255,255,255,0.14)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)' }}}
+            onMouseLeave={e => { if (!open) { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)' }}}
           >
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.85)', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {perfil.nombre?.split(' ')[0]}
             </span>
             <AvatarCircle perfil={perfil} size={32} fontSize={11} />

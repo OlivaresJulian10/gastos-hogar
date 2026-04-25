@@ -1,43 +1,33 @@
 const BUBBLES = [
   {
-    w: 320, h: 320, pos: { top: -100, left: -80 },
-    bg: 'radial-gradient(circle, rgba(168,85,247,0.30) 0%, rgba(168,85,247,0.08) 50%, transparent 70%)',
-    anim: 'floatBubble1 15s ease-in-out 0s infinite',
+    w: 1000, h: 1000, pos: { top: -300, left: -300 },
+    bg: 'radial-gradient(circle, rgba(255,107,157,0.58) 0%, rgba(255,107,157,0.18) 45%, transparent 68%)',
+    anim: 'floatBubble1 22s ease-in-out 0s infinite',
   },
   {
-    w: 260, h: 260, pos: { top: -60, right: -70 },
-    bg: 'radial-gradient(circle, rgba(255,107,157,0.26) 0%, rgba(255,107,157,0.07) 50%, transparent 70%)',
-    anim: 'floatBubble2 12s ease-in-out 0s infinite',
+    w: 850, h: 850, pos: { top: -200, right: -280 },
+    bg: 'radial-gradient(circle, rgba(251,146,60,0.50) 0%, rgba(251,146,60,0.14) 45%, transparent 68%)',
+    anim: 'floatBubble2 18s ease-in-out 1.5s infinite',
   },
   {
-    w: 220, h: 220, pos: { top: '38%', left: -60 },
-    bg: 'radial-gradient(circle, rgba(251,146,60,0.22) 0%, rgba(251,146,60,0.06) 50%, transparent 70%)',
-    anim: 'floatBubble3 17s ease-in-out 0s infinite',
+    w: 760, h: 760, pos: { bottom: -220, right: -200 },
+    bg: 'radial-gradient(circle, rgba(99,102,241,0.55) 0%, rgba(99,102,241,0.16) 45%, transparent 68%)',
+    anim: 'floatBubble3 26s ease-in-out 3s infinite',
   },
   {
-    w: 380, h: 380, pos: { bottom: -110, right: -90 },
-    bg: 'radial-gradient(circle, rgba(217,70,168,0.25) 0%, rgba(217,70,168,0.07) 50%, transparent 70%)',
-    anim: 'floatBubble4 14s ease-in-out 0s infinite',
+    w: 680, h: 680, pos: { bottom: -180, left: -180 },
+    bg: 'radial-gradient(circle, rgba(20,184,166,0.48) 0%, rgba(20,184,166,0.13) 45%, transparent 68%)',
+    anim: 'floatBubble4 20s ease-in-out 5s infinite',
   },
   {
-    w: 180, h: 180, pos: { top: '55%', left: '50%' },
-    bg: 'radial-gradient(circle, rgba(236,72,153,0.20) 0%, rgba(236,72,153,0.05) 50%, transparent 70%)',
-    anim: 'floatBubble5 10s ease-in-out 1s infinite',
+    w: 480, h: 480, pos: { top: '38%', left: '42%' },
+    bg: 'radial-gradient(circle, rgba(192,38,211,0.42) 0%, rgba(192,38,211,0.10) 45%, transparent 68%)',
+    anim: 'floatBubble5 14s ease-in-out 7s infinite',
   },
   {
-    w: 230, h: 230, pos: { bottom: '20%', left: '18%' },
-    bg: 'radial-gradient(circle, rgba(139,92,246,0.22) 0%, rgba(139,92,246,0.06) 50%, transparent 70%)',
-    anim: 'floatBubble1 19s ease-in-out 3s infinite',
-  },
-  {
-    w: 150, h: 150, pos: { top: '20%', right: '18%' },
-    bg: 'radial-gradient(circle, rgba(251,113,133,0.22) 0%, rgba(251,113,133,0.06) 50%, transparent 70%)',
+    w: 360, h: 360, pos: { top: '18%', left: '28%' },
+    bg: 'radial-gradient(circle, rgba(244,114,182,0.38) 0%, transparent 65%)',
     anim: 'floatBubble2 11s ease-in-out 2s infinite',
-  },
-  {
-    w: 120, h: 120, pos: { top: '70%', right: '35%' },
-    bg: 'radial-gradient(circle, rgba(168,85,247,0.18) 0%, transparent 70%)',
-    anim: 'floatBubble3 9s ease-in-out 4s infinite',
   },
 ]
 
@@ -54,6 +44,7 @@ export default function AnimatedBackground() {
             ...b.pos,
             background: b.bg,
             animation: b.anim,
+            filter: 'blur(38px)',
           }}
         />
       ))}

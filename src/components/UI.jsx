@@ -7,14 +7,16 @@ export function Card({ children, style = {}, noPad = false }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: 'rgba(255,255,255,0.86)',
-        backdropFilter: 'blur(28px)',
-        WebkitBackdropFilter: 'blur(28px)',
-        border: '1px solid rgba(255,255,255,0.92)',
+        background: 'rgba(255,255,255,0.91)',
+        backdropFilter: 'blur(36px)',
+        WebkitBackdropFilter: 'blur(36px)',
+        border: '1px solid rgba(255,255,255,0.60)',
         borderRadius: 'var(--radius-lg)',
         padding: noPad ? 0 : '1.5rem',
-        boxShadow: hovered ? 'var(--shadow-hover)' : 'var(--shadow)',
-        transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
+        boxShadow: hovered
+          ? '0 28px 72px rgba(0,0,0,0.28), 0 2px 0 rgba(255,255,255,0.7) inset'
+          : '0 8px 40px rgba(0,0,0,0.18), 0 1px 0 rgba(255,255,255,0.65) inset',
+        transform: hovered ? 'translateY(-5px)' : 'translateY(0)',
         transition: 'transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease',
         ...style,
       }}
@@ -39,14 +41,16 @@ export function MetricCard({ label, value, sub, color, accent, index = 0 }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: 'rgba(255,255,255,0.86)',
-        backdropFilter: 'blur(28px)',
-        WebkitBackdropFilter: 'blur(28px)',
-        border: '1px solid rgba(255,255,255,0.92)',
+        background: 'rgba(255,255,255,0.91)',
+        backdropFilter: 'blur(36px)',
+        WebkitBackdropFilter: 'blur(36px)',
+        border: '1px solid rgba(255,255,255,0.60)',
         borderRadius: 'var(--radius-lg)',
         padding: '1.25rem 1.4rem 1.25rem 1.6rem',
-        boxShadow: hovered ? 'var(--shadow-hover)' : 'var(--shadow)',
-        transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
+        boxShadow: hovered
+          ? '0 28px 72px rgba(0,0,0,0.28), 0 2px 0 rgba(255,255,255,0.7) inset'
+          : '0 8px 40px rgba(0,0,0,0.18), 0 1px 0 rgba(255,255,255,0.65) inset',
+        transform: hovered ? 'translateY(-5px)' : 'translateY(0)',
         transition: 'transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease',
         position: 'relative', overflow: 'hidden',
       }}
@@ -91,24 +95,25 @@ export function PageTitle({ title, sub, action }) {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
         <div>
           <h1 style={{
-            fontSize: 32, fontWeight: 700,
+            fontSize: 34, fontWeight: 700,
             fontFamily: "'Playfair Display', serif",
             letterSpacing: '-0.8px', lineHeight: 1.15,
-            background: 'linear-gradient(135deg, #1E0A38 20%, #9333EA 100%)',
+            background: 'linear-gradient(135deg, #FFFFFF 0%, #EDE9FE 55%, #F5D0FE 100%)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
           }}>
             {title}
           </h1>
           {sub && (
-            <p style={{ fontSize: 14, color: 'var(--text3)', marginTop: 6, fontWeight: 500, letterSpacing: '0.1px' }}>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', marginTop: 6, fontWeight: 500, letterSpacing: '0.1px' }}>
               {sub}
             </p>
           )}
           {/* Accent line */}
           <div style={{
-            marginTop: 14, height: 3, width: 48,
-            background: 'linear-gradient(90deg,#FF6B9D,#A855F7)',
+            marginTop: 14, height: 3, width: 52,
+            background: 'linear-gradient(90deg,#FF6B9D,#F0ABFC)',
             borderRadius: 99,
+            boxShadow: '0 0 12px rgba(255,107,157,0.6)',
           }} />
         </div>
         {action && <div style={{ flexShrink: 0 }}>{action}</div>}
