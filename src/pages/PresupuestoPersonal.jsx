@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { Card, MetricCard, PageTitle, Badge, fmt, CATEGORIAS } from '../components/UI'
+import { Card, MetricCard, PageTitle, Badge, fmt, CATEGORIAS, CalendarWidget, useLiveDate } from '../components/UI'
 import { uploadFactura, deleteFactura, validateFactura, isImage, FACTURA_ACCEPT } from '../lib/uploadFactura'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -96,10 +96,11 @@ function FacturaModal({ url, onClose }) {
 
 export default function PresupuestoPersonal() {
   const { user, perfil } = useAuth()
-  const today = new Date()
+  const today = useLiveDate()
   const mesActual = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
 
   const [mes, setMes] = useState(mesActual)
+  const [selectedDay, setSelectedDay] = useState(null)
 
   // Budget
   const [presupuesto, setPresupuesto] = useState(null)
@@ -271,7 +272,8 @@ export default function PresupuestoPersonal() {
   // Computed totals
   const gastosQ1 = gastos.filter(g => parseInt(g.fecha.split('-')[2]) <= 15)
   const gastosQ2 = gastos.filter(g => parseInt(g.fecha.split('-')[2]) > 15)
-  const gastosMostrar = activeTab === 'q1' ? gastosQ1 : activeTab === 'q2' ? gastosQ2 : gastos
+  const gastosMostrar = (activeTab === 'q1' ? gastosQ1 : activeTab === 'q2' ? gastosQ2 : gastos)
+    .filter(g => selectedDay === null || parseInt(g.fecha.split('-')[2]) === selectedDay)
   const totalGastado = gastos.reduce((s, g) => s + Number(g.monto), 0)
   const totalQ1 = gastosQ1.reduce((s, g) => s + Number(g.monto), 0)
   const totalQ2 = gastosQ2.reduce((s, g) => s + Number(g.monto), 0)
@@ -381,6 +383,31 @@ export default function PresupuestoPersonal() {
           sub={disponible !== null && disponible < 0 ? `⚠ +${fmt(Math.abs(disponible))} excedido` : (disponible !== null ? `de ${fmt(presupuesto.monto)}` : 'Sin presupuesto')}
         />
       </div>
+
+      {/* ── Calendario del mes ── */}
+      <Card style={{ marginBottom: '1.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'linear-gradient(135deg,#6366F1,#A855F7)', boxShadow: '0 0 8px rgba(99,102,241,0.6)' }} />
+          <p style={{ fontSize: 11, fontWeight: 800, color: 'var(--text3)', letterSpacing: '1px', textTransform: 'uppercase' }}>
+            Calendario — {mesLabelCap}
+          </p>
+          {selectedDay && (
+            <button
+              onClick={() => setSelectedDay(null)}
+              style={{
+                marginLeft: 'auto', fontSize: 11, fontWeight: 700, padding: '3px 12px', borderRadius: 20,
+                background: 'rgba(168,85,247,0.10)', border: '1px solid rgba(168,85,247,0.28)',
+                color: 'var(--accent)', cursor: 'pointer', fontFamily: 'var(--font)', transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(168,85,247,0.18)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(168,85,247,0.10)' }}
+            >
+              Día {selectedDay} · ✕ limpiar
+            </button>
+          )}
+        </div>
+        <CalendarWidget mes={mes} gastos={gastos} selectedDay={selectedDay} onSelectDay={setSelectedDay} />
+      </Card>
 
       {/* ── Barras de progreso por quincena ── */}
       {presupuesto?.monto > 0 && (

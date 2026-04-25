@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
-import { Card, PageTitle, Badge, Avatar, fmt, CATEGORIAS } from '../components/UI'
+import { Card, PageTitle, Badge, Avatar, fmt, CATEGORIAS, CalendarWidget } from '../components/UI'
 import { uploadFactura, deleteFactura, validateFactura, isImage, FACTURA_ACCEPT } from '../lib/uploadFactura'
 import { format, subMonths } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -379,6 +379,7 @@ export default function Historial() {
   const [loading, setLoading] = useState(true)
   const [facturaModal, setFacturaModal] = useState(null)
   const [editando, setEditando] = useState(null)
+  const [selectedDay, setSelectedDay] = useState(null)
 
   const mesesDisponibles = Array.from({ length: 12 }, (_, i) => {
     const d = subMonths(new Date(), i)
@@ -427,36 +428,82 @@ export default function Historial() {
     XLSX.writeFile(wb, `gastos-${filtros.mes || 'todos'}.xlsx`)
   }
 
-  const total = gastos.reduce((s, g) => s + Number(g.monto), 0)
-
   const inp = {
     padding: '8px 14px', fontSize: 13, fontWeight: 500,
-    border: '1px solid var(--border-strong)', borderRadius: 10,
-    background: 'var(--surface)', color: 'var(--text)',
-    outline: 'none', cursor: 'pointer',
+    border: '1.5px solid rgba(255,255,255,0.18)', borderRadius: 11,
+    background: 'rgba(255,255,255,0.12)', color: 'white',
+    outline: 'none', cursor: 'pointer', backdropFilter: 'blur(12px)',
+    fontFamily: 'var(--font)',
+  }
+
+  const gastosFiltrados = selectedDay
+    ? gastos.filter(g => parseInt(g.fecha.split('-')[2]) === selectedDay)
+    : gastos
+
+  const byDate = gastosFiltrados.reduce((acc, g) => {
+    if (!acc[g.fecha]) acc[g.fecha] = []
+    acc[g.fecha].push(g)
+    return acc
+  }, {})
+  const fechasOrdenadas = Object.keys(byDate).sort((a, b) => b.localeCompare(a))
+
+  const GastoRow = ({ g, isLast }) => {
+    const persona = personas.find(p => p.id === g.pagado_por)
+    const pIdx = personas.findIndex(p => p.id === g.pagado_por)
+    const splitNombres = (g.split_entre || []).map(id => personas.find(p => p.id === id)?.nombre).filter(Boolean).join(', ')
+    return (
+      <div style={{
+        display: 'flex', alignItems: 'flex-start', gap: 13, padding: '11px 0',
+        borderBottom: !isLast ? '1px solid rgba(168,85,247,0.07)' : 'none',
+      }}>
+        <Avatar nombre={persona?.nombre} index={pIdx >= 0 ? pIdx : 0} size={34} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text)' }}>{g.descripcion}</span>
+            <Badge label={g.categoria} cat={g.categoria} />
+            {g.factura_url && (
+              <button onClick={() => setFacturaModal(g.factura_url)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 15, padding: '0 2px', lineHeight: 1, opacity: 0.85, transition: 'all 0.15s' }}
+                onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1.2)' }}
+                onMouseLeave={e => { e.currentTarget.style.opacity = '0.85'; e.currentTarget.style.transform = 'scale(1)' }}>🧾</button>
+            )}
+          </div>
+          <p style={{ fontSize: 11.5, color: 'var(--text3)', marginTop: 3, fontWeight: 500 }}>
+            Pagó: {persona?.nombre || '—'}{splitNombres ? ` · Dividido: ${splitNombres}` : ''}
+          </p>
+          {g.notas && <p style={{ fontSize: 11, color: 'var(--text3)', fontStyle: 'italic', marginTop: 1 }}>"{g.notas}"</p>}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
+          <span style={{ fontWeight: 800, fontSize: 14, background: 'linear-gradient(135deg,#FF6B9D,#A855F7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+            {fmt(Number(g.monto))}
+          </span>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button onClick={() => setEditando(g)} style={{ fontSize: 11, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px', fontWeight: 700, fontFamily: 'var(--font)' }}>Editar</button>
+            <button onClick={() => eliminar(g)} style={{ fontSize: 11, color: 'var(--coral)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px', fontWeight: 600, fontFamily: 'var(--font)' }}>✕</button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div>
       <PageTitle title="Historial de gastos" sub="Consulta, filtra y exporta todos los gastos del hogar" />
 
-      {/* Modals */}
       {facturaModal && <FacturaModal url={facturaModal} onClose={() => setFacturaModal(null)} />}
       {editando && (
-        <EditModal
-          gasto={editando}
-          personas={personas}
-          onClose={() => setEditando(null)}
-          onSave={updated => {
-            setGastos(gs => gs.map(g => g.id === updated.id ? updated : g))
-            setEditando(null)
-          }}
-        />
+        <EditModal gasto={editando} personas={personas} onClose={() => setEditando(null)}
+          onSave={updated => { setGastos(gs => gs.map(g => g.id === updated.id ? updated : g)); setEditando(null) }} />
       )}
 
-      {/* Filters */}
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: '1.5rem', alignItems: 'center' }}>
-        <select value={filtros.mes} onChange={e => setFiltros(f => ({ ...f, mes: e.target.value }))} style={inp}>
+      {/* ── Glass filter bar ── */}
+      <div style={{
+        display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: '1.5rem', alignItems: 'center',
+        padding: '14px 18px', borderRadius: 18,
+        background: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255,255,255,0.18)',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+      }}>
+        <select value={filtros.mes} onChange={e => { setFiltros(f => ({ ...f, mes: e.target.value })); setSelectedDay(null) }} style={inp}>
           <option value="">Todos los meses</option>
           {mesesDisponibles.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
         </select>
@@ -468,112 +515,119 @@ export default function Historial() {
           <option value="">Todas las personas</option>
           {personas.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
         </select>
-
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>
-            {gastos.length} gastos ·{' '}
-            <span style={{ fontWeight: 700, color: 'var(--accent)' }}>{fmt(total)}</span>
+          <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', fontWeight: 500 }}>
+            {gastosFiltrados.length} gastos ·{' '}
+            <span style={{ fontWeight: 800, color: 'white' }}>{fmt(gastosFiltrados.reduce((s, g) => s + Number(g.monto), 0))}</span>
           </span>
-          <button
-            onClick={exportarExcel}
-            disabled={gastos.length === 0}
-            style={{
-              padding: '9px 18px',
-              background: gastos.length === 0 ? 'var(--gray-bg)' : 'linear-gradient(135deg, #FF6B9D 0%, #A855F7 100%)',
-              color: gastos.length === 0 ? 'var(--gray)' : 'white',
-              border: 'none', borderRadius: 11, fontSize: 13, fontWeight: 700,
-              cursor: gastos.length === 0 ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', gap: 7,
-              boxShadow: gastos.length > 0 ? '0 4px 16px rgba(168,85,247,0.3)' : 'none',
-            }}
+          <button onClick={exportarExcel} disabled={gastos.length === 0} style={{
+            padding: '9px 18px',
+            background: gastos.length === 0 ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg,#FF6B9D,#A855F7)',
+            color: gastos.length === 0 ? 'rgba(255,255,255,0.28)' : 'white',
+            border: 'none', borderRadius: 11, fontSize: 13, fontWeight: 700,
+            cursor: gastos.length === 0 ? 'not-allowed' : 'pointer',
+            display: 'flex', alignItems: 'center', gap: 7,
+            boxShadow: gastos.length > 0 ? '0 4px 16px rgba(168,85,247,0.35)' : 'none',
+            fontFamily: 'var(--font)', transition: 'all 0.18s',
+          }}
             onMouseEnter={e => { if (gastos.length > 0) { e.currentTarget.style.opacity = '0.88'; e.currentTarget.style.transform = 'translateY(-2px)' } }}
             onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)' }}
-          >
-            <span style={{ fontSize: 15 }}>↓</span> Exportar Excel
-          </button>
+          >↓ Exportar Excel</button>
         </div>
       </div>
 
-      {/* List */}
-      <Card>
-        {loading && (
-          <p style={{ color: 'var(--text3)', fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 18 }}>✦</span> Cargando...
-          </p>
-        )}
-        {!loading && gastos.length === 0 && (
-          <p style={{ color: 'var(--text3)', fontSize: 14, textAlign: 'center', padding: '2.5rem', fontStyle: 'italic' }}>
-            No hay gastos con estos filtros ✦
-          </p>
-        )}
-        {!loading && gastos.map((g, idx) => {
-          const persona = personas.find(p => p.id === g.pagado_por)
-          const pIdx = personas.findIndex(p => p.id === g.pagado_por)
-          const splitNombres = (g.split_entre || []).map(id => personas.find(p => p.id === id)?.nombre).filter(Boolean).join(', ')
-          return (
-            <div key={g.id} style={{
-              display: 'flex', alignItems: 'flex-start', gap: 13, padding: '12px 0',
-              borderBottom: idx < gastos.length - 1 ? '1px solid var(--border)' : 'none',
-            }}>
-              <Avatar nombre={persona?.nombre} index={pIdx >= 0 ? pIdx : 0} />
+      {/* ── 2-col: calendario + timeline ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '1.5rem', alignItems: 'start' }}>
 
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 14, fontWeight: 700 }}>{g.descripcion}</span>
-                  <Badge label={g.categoria} cat={g.categoria} />
-                  {g.factura_url && (
-                    <button
-                      onClick={() => setFacturaModal(g.factura_url)}
-                      title="Ver factura"
-                      style={{
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        fontSize: 16, padding: '0 2px', lineHeight: 1,
-                        opacity: 0.85, transition: 'opacity 0.15s, transform 0.15s',
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1.2)' }}
-                      onMouseLeave={e => { e.currentTarget.style.opacity = '0.85'; e.currentTarget.style.transform = 'scale(1)' }}
-                    >
-                      🧾
-                    </button>
-                  )}
-                </div>
-                <p style={{ fontSize: 12, color: 'var(--text2)', marginTop: 3, fontWeight: 500 }}>
-                  {g.fecha} · Pagó: {persona?.nombre || '—'}
-                </p>
-                <p style={{ fontSize: 12, color: 'var(--text3)' }}>Dividido: {splitNombres || '—'}</p>
-                {g.notas && (
-                  <p style={{ fontSize: 12, color: 'var(--text3)', fontStyle: 'italic', marginTop: 2 }}>"{g.notas}"</p>
-                )}
-              </div>
-
-              {/* Right: amount + actions */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
-                <span style={{
-                  fontWeight: 700, fontSize: 15,
-                  background: 'var(--grad-primary)',
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-                }}>
-                  {fmt(g.monto)}
-                </span>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button
-                    onClick={() => setEditando(g)}
-                    style={{ fontSize: 11, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px', fontWeight: 700, fontFamily: 'var(--font)' }}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => eliminar(g)}
-                    style={{ fontSize: 11, color: 'var(--coral)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px', fontWeight: 600, fontFamily: 'var(--font)' }}
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              </div>
+        {/* Calendario sticky */}
+        <div style={{ position: 'sticky', top: 20 }}>
+          <Card>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1.1rem' }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'linear-gradient(135deg,#6366F1,#A855F7)', boxShadow: '0 0 8px rgba(99,102,241,0.6)' }} />
+              <p style={{ fontSize: 11, fontWeight: 800, color: 'var(--text3)', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                {filtros.mes
+                  ? format(new Date(filtros.mes + '-15'), 'MMMM yyyy', { locale: es }).replace(/^\w/, c => c.toUpperCase())
+                  : 'Calendario'}
+              </p>
             </div>
-          )
-        })}
-      </Card>
+            {filtros.mes ? (
+              <CalendarWidget mes={filtros.mes} gastos={gastos} selectedDay={selectedDay} onSelectDay={setSelectedDay} />
+            ) : (
+              <p style={{ fontSize: 12, color: 'var(--text3)', textAlign: 'center', padding: '1.5rem 0', fontStyle: 'italic' }}>
+                Selecciona un mes para ver el calendario
+              </p>
+            )}
+            {selectedDay && (
+              <button onClick={() => setSelectedDay(null)} style={{
+                marginTop: 14, width: '100%', padding: '7px', borderRadius: 10, cursor: 'pointer',
+                border: '1px solid rgba(168,85,247,0.28)', background: 'rgba(168,85,247,0.07)',
+                color: 'var(--accent)', fontSize: 12, fontWeight: 700, fontFamily: 'var(--font)', transition: 'all 0.15s',
+              }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(168,85,247,0.14)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(168,85,247,0.07)'}
+              >
+                Día {selectedDay} · ✕ limpiar filtro
+              </button>
+            )}
+          </Card>
+        </div>
+
+        {/* Timeline agrupado por fecha */}
+        <Card>
+          {loading && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '2.5rem', color: 'var(--text3)', justifyContent: 'center' }}>
+              <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid rgba(168,85,247,0.2)', borderTopColor: '#A855F7', animation: 'spin 0.8s linear infinite' }} />
+              Cargando...
+            </div>
+          )}
+          {!loading && gastosFiltrados.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '3.5rem 1rem' }}>
+              <div style={{ fontSize: 40, marginBottom: 14, filter: 'drop-shadow(0 2px 10px rgba(168,85,247,0.4))' }}>✦</div>
+              <p style={{ fontSize: 14, color: 'var(--text3)', fontWeight: 500 }}>
+                {selectedDay ? `Sin gastos el día ${selectedDay}` : 'No hay gastos con estos filtros'}
+              </p>
+            </div>
+          )}
+          {!loading && fechasOrdenadas.map((fecha, fIdx) => {
+            const items = byDate[fecha]
+            const dayNum = parseInt(fecha.split('-')[2])
+            const isQ1 = dayNum <= 15
+            const qColor = isQ1 ? '#FF6B9D' : '#6366F1'
+            const qLabel = isQ1 ? 'Q1' : 'Q2'
+            const dayTotal = items.reduce((s, g) => s + Number(g.monto), 0)
+            const fechaDate = new Date(fecha + 'T12:00:00')
+            return (
+              <div key={fecha} style={{ marginBottom: fIdx < fechasOrdenadas.length - 1 ? '1.5rem' : 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, paddingBottom: 8, borderBottom: `1.5px solid ${qColor}1A` }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                    background: `linear-gradient(135deg,${qColor}22,${qColor}10)`,
+                    border: `1.5px solid ${qColor}30`,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <span style={{ fontSize: 14, fontWeight: 800, color: qColor, lineHeight: 1 }}>{dayNum}</span>
+                    <span style={{ fontSize: 7.5, fontWeight: 700, color: qColor, opacity: 0.7, letterSpacing: '0.3px' }}>{qLabel}</span>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>
+                      {format(fechaDate, "EEEE d 'de' MMMM", { locale: es }).replace(/^\w/, c => c.toUpperCase())}
+                    </p>
+                    <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1, fontWeight: 500 }}>
+                      {items.length} gasto{items.length > 1 ? 's' : ''} · {fmt(dayTotal)}
+                    </p>
+                  </div>
+                  <span style={{
+                    fontSize: 13.5, fontWeight: 800, flexShrink: 0,
+                    background: isQ1 ? 'linear-gradient(135deg,#FF6B9D,#C026D3)' : 'linear-gradient(135deg,#6366F1,#8B5CF6)',
+                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+                  }}>{fmt(dayTotal)}</span>
+                </div>
+                {items.map((g, i) => <GastoRow key={g.id} g={g} isLast={i === items.length - 1} />)}
+              </div>
+            )
+          })}
+        </Card>
+      </div>
     </div>
   )
 }

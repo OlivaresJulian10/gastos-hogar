@@ -1,4 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+/* ── useLiveDate: re-renders exactly at midnight so "hoy" stays current ── */
+export function useLiveDate() {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const t = new Date()
+    const msToMidnight = new Date(t.getFullYear(), t.getMonth(), t.getDate() + 1) - t
+    const timer = setTimeout(() => setNow(new Date()), msToMidnight)
+    return () => clearTimeout(timer)
+  }, [now])
+  return now
+}
 
 export function Card({ children, style = {}, noPad = false }) {
   const [hovered, setHovered] = useState(false)
@@ -207,3 +219,124 @@ export const CAT_CHART_COLORS = [
   '#F43F5E','#C026D3','#0EA5E9','#10B981',
   '#8B5CF6','#64748B',
 ]
+
+export function CalendarWidget({ mes, gastos = [], selectedDay = null, onSelectDay }) {
+  const [year, month] = mes.split('-').map(Number)
+  const today = new Date()
+  const isCurrentMonth = year === today.getFullYear() && month === (today.getMonth() + 1)
+  const todayDay = today.getDate()
+
+  const daysInMonth = new Date(year, month, 0).getDate()
+  const firstDayOfWeek = new Date(year, month - 1, 1).getDay()
+  const offset = (firstDayOfWeek + 6) % 7 // Monday-first
+
+  const spendMap = {}
+  gastos.forEach(g => {
+    const day = parseInt(g.fecha.split('-')[2], 10)
+    spendMap[day] = (spendMap[day] || 0) + Number(g.monto || 0)
+  })
+  const maxSpend = Math.max(1, ...Object.values(spendMap).length ? Object.values(spendMap) : [1])
+
+  const DAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
+
+  return (
+    <div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 8 }}>
+        {DAYS.map(d => (
+          <div key={d} style={{
+            textAlign: 'center', fontSize: 9.5, fontWeight: 800,
+            color: 'rgba(255,255,255,0.36)', letterSpacing: '0.5px', paddingBottom: 3,
+          }}>{d}</div>
+        ))}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+        {Array.from({ length: offset }, (_, i) => <div key={`e${i}`} />)}
+
+        {Array.from({ length: daysInMonth }, (_, i) => {
+          const day = i + 1
+          const isQ1 = day <= 15
+          const isFuture = isCurrentMonth && day > todayDay
+          const isToday = isCurrentMonth && day === todayDay
+          const isSelected = day === selectedDay
+          const spend = spendMap[day] || 0
+          const dotSize = spend > 0 ? Math.round(3 + 3 * (spend / maxSpend)) : 0
+          const dotOpacity = spend > 0 ? 0.55 + 0.45 * (spend / maxSpend) : 0
+
+          let bg = 'transparent'
+          let color = isQ1 ? 'rgba(255,175,200,0.78)' : 'rgba(165,180,252,0.78)'
+          let border = '1px solid transparent'
+          let shadow = 'none'
+          let fw = 600
+
+          if (isFuture && !isToday) color = 'rgba(255,255,255,0.20)'
+          if (isToday && !isSelected) {
+            bg = isQ1 ? 'rgba(255,107,157,0.13)' : 'rgba(99,102,241,0.13)'
+            border = isQ1 ? '1.5px solid rgba(255,107,157,0.68)' : '1.5px solid rgba(99,102,241,0.68)'
+            color = isQ1 ? '#FF6B9D' : '#818CF8'
+            fw = 800
+          }
+          if (isSelected) {
+            bg = isQ1
+              ? 'linear-gradient(135deg,#FF6B9D,#C026D3)'
+              : 'linear-gradient(135deg,#6366F1,#8B5CF6)'
+            color = 'white'; fw = 800; border = '1px solid transparent'
+            shadow = isQ1 ? '0 3px 14px rgba(255,107,157,0.58)' : '0 3px 14px rgba(99,102,241,0.58)'
+          }
+
+          return (
+            <div
+              key={day}
+              onClick={() => !isFuture && onSelectDay && onSelectDay(isSelected ? null : day)}
+              style={{
+                position: 'relative', aspectRatio: '1',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                borderRadius: 8, background: bg, border, color,
+                fontSize: 11.5, fontWeight: fw,
+                cursor: isFuture ? 'default' : 'pointer',
+                boxShadow: shadow,
+                transition: 'all 0.15s ease',
+                userSelect: 'none',
+                opacity: isFuture && !isToday ? 0.35 : 1,
+              }}
+            >
+              <span style={{ lineHeight: 1, position: 'relative', zIndex: 1 }}>{day}</span>
+              {dotSize > 0 && (
+                <div style={{
+                  position: 'absolute', bottom: 3, left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: dotSize, height: dotSize, borderRadius: '50%',
+                  background: isQ1 ? '#FF6B9D' : '#818CF8',
+                  opacity: dotOpacity,
+                  boxShadow: isQ1
+                    ? `0 0 ${dotSize + 2}px rgba(255,107,157,0.7)`
+                    : `0 0 ${dotSize + 2}px rgba(129,140,248,0.7)`,
+                }} />
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      <div style={{ display: 'flex', gap: 10, marginTop: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+        {[
+          { color: '#FF6B9D', label: 'Q1 · días 1–15' },
+          { color: '#818CF8', label: 'Q2 · días 16–fin' },
+          { color: '#FF6B9D', label: 'Hoy', ring: true },
+          { color: '#A855F7', label: 'Con gasto', dot: true },
+        ].map(({ color, label, ring, dot }) => (
+          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div style={{
+              width: dot ? 6 : 9, height: dot ? 6 : 9,
+              borderRadius: dot ? '50%' : 3,
+              background: dot ? color : 'transparent',
+              border: ring ? `1.5px solid ${color}` : dot ? 'none' : `1.5px solid ${color}`,
+              boxShadow: `0 0 4px ${color}55`, flexShrink: 0,
+            }} />
+            <span style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.42)', fontWeight: 600 }}>{label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
