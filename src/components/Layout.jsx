@@ -12,6 +12,7 @@ const navItems = [
   { to: '/presupuesto',    icon: '◐',  label: 'Presupuesto hogar' },
   { to: '/mi-presupuesto', icon: '◆',  label: 'Mi presupuesto' },
   { to: '/personas',       icon: '◉',  label: 'Personas' },
+  { to: '/asistente',      icon: '✦',  label: 'Asistente IA' },
   { to: '/perfil',         icon: '⊙',  label: 'Perfil' },
 ]
 
@@ -24,6 +25,7 @@ const PAGE_TITLES = {
   '/presupuesto':    'Presupuesto del hogar',
   '/mi-presupuesto': 'Mi presupuesto',
   '/personas':       'Personas',
+  '/asistente':      'Asistente IA',
   '/perfil':         'Mi perfil',
 }
 
@@ -55,7 +57,7 @@ function AvatarCircle({ perfil, size = 36, fontSize = 13 }) {
   )
 }
 
-function TopBar({ perfil, cerrarSesion, navigate }) {
+function TopBar({ perfil, cerrarSesion, navigate, isMobile, onMenuClick }) {
   const location = useLocation()
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
@@ -78,6 +80,13 @@ function TopBar({ perfil, cerrarSesion, navigate }) {
       padding: '0 2.25rem', gap: 12,
       boxShadow: '0 1px 28px rgba(0,0,0,0.25)',
     }}>
+      {isMobile && (
+        <button onClick={onMenuClick} style={{
+          background: 'none', border: 'none', cursor: 'pointer',
+          color: 'rgba(255,255,255,0.82)', fontSize: 22, padding: '4px 10px 4px 0',
+          flexShrink: 0, display: 'flex', alignItems: 'center', lineHeight: 1,
+        }}>☰</button>
+      )}
       <span style={{
         flex: 1, fontSize: 11, fontWeight: 800, color: 'rgba(255,255,255,0.55)',
         letterSpacing: '1.8px', textTransform: 'uppercase',
@@ -91,7 +100,7 @@ function TopBar({ perfil, cerrarSesion, navigate }) {
             onClick={() => setOpen(o => !o)}
             style={{
               display: 'flex', alignItems: 'center', gap: 9,
-              padding: '5px 8px 5px 14px', borderRadius: 50,
+              padding: isMobile ? '5px 8px' : '5px 8px 5px 14px', borderRadius: 50,
               background: open
                 ? 'rgba(255,255,255,0.18)'
                 : 'rgba(255,255,255,0.08)',
@@ -103,9 +112,11 @@ function TopBar({ perfil, cerrarSesion, navigate }) {
             onMouseEnter={e => { if (!open) { e.currentTarget.style.background = 'rgba(255,255,255,0.14)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)' }}}
             onMouseLeave={e => { if (!open) { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)' }}}
           >
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.85)', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {perfil.nombre?.split(' ')[0]}
-            </span>
+            {!isMobile && (
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.85)', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {perfil.nombre?.split(' ')[0]}
+              </span>
+            )}
             <AvatarCircle perfil={perfil} size={32} fontSize={11} />
           </button>
 
@@ -178,19 +189,40 @@ export default function Layout({ children }) {
   const { perfil, cerrarSesion } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const [sideOpen, setSideOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  useEffect(() => { setSideOpen(false) }, [location.pathname])
+
+  const isFullBleed = location.pathname === '/asistente'
 
   return (
     <div className="page-root" style={{ display: 'flex', minHeight: '100vh' }}>
+      {isMobile && sideOpen && (
+        <div onClick={() => setSideOpen(false)} style={{
+          position: 'fixed', inset: 0, zIndex: 99,
+          background: 'rgba(5,2,20,0.72)', backdropFilter: 'blur(4px)',
+          WebkitBackdropFilter: 'blur(4px)',
+        }} />
+      )}
       {/* ── Sidebar ── */}
       <aside style={{
         width: 248, flexShrink: 0,
         background: 'linear-gradient(160deg, #13022E 0%, #3B0E72 48%, #7C28C0 100%)',
         display: 'flex', flexDirection: 'column',
         padding: '0',
-        position: 'sticky', top: 0, height: '100vh',
+        position: isMobile ? 'fixed' : 'sticky', top: 0, height: '100vh',
         overflowY: 'auto',
         boxShadow: '6px 0 40px rgba(19,2,46,0.4)',
-        zIndex: 2,
+        zIndex: isMobile ? 100 : 2,
+        transform: isMobile ? `translateX(${sideOpen ? '0' : '-100%'})` : 'none',
+        transition: 'transform 0.28s cubic-bezier(0.22,1,0.36,1)',
       }}>
         {/* Subtle noise overlay */}
         <div style={{
@@ -330,9 +362,19 @@ export default function Layout({ children }) {
 
       {/* Content */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <TopBar perfil={perfil} cerrarSesion={cerrarSesion} navigate={navigate} />
-        <main style={{ flex: 1, padding: '2.5rem 2.25rem', maxWidth: 1040, width: '100%' }}>
-          <div className="page-enter">{children}</div>
+        <TopBar perfil={perfil} cerrarSesion={cerrarSesion} navigate={navigate} isMobile={isMobile} onMenuClick={() => setSideOpen(v => !v)} />
+        <main style={{
+          flex: 1, width: '100%', minHeight: 0,
+          padding: isFullBleed ? 0 : isMobile ? '1.25rem 1rem' : '2.5rem 2.25rem',
+          maxWidth: isFullBleed ? 'none' : 1040,
+          overflow: isFullBleed ? 'hidden' : undefined,
+          display: isFullBleed ? 'flex' : undefined,
+          flexDirection: isFullBleed ? 'column' : undefined,
+        }}>
+          <div
+            style={isFullBleed ? { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 } : undefined}
+            className={isFullBleed ? undefined : 'page-enter'}
+          >{children}</div>
         </main>
       </div>
       <ChatWidget />

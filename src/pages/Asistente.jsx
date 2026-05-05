@@ -7,32 +7,27 @@ const LS = {
   set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
   del: k => localStorage.removeItem(k),
 }
-const K = { nombre: 'lumi_nombre', memoria: 'lumi_memoria', hist: 'lumi_hist' }
 const MAX_HIST = 40
-
-const getNombre  = () => LS.get(K.nombre) || null
-const getMemoria = () => LS.get(K.memoria) || []
-const getHist    = () => LS.get(K.hist) || []
 
 /* ── Construcción del system prompt ─────────────── */
 function buildSystem(nombre, memoria) {
   const memStr = memoria.length
     ? memoria.map(m => `• ${m.clave}: ${m.valor}`).join('\n')
     : '(aún sin datos)'
-  return `Eres Lumi, una asistente de IA inteligente, empática y versátil${nombre ? ` de ${nombre}` : ''}.
+  return `Eres Lumi, una asistente de IA cálida, inteligente y versátil${nombre ? ` — la asistente personal de ${nombre}` : ''}.
 
-## Memoria del usuario:
+## Lo que recuerdo del usuario:
 ${memStr}
 
-## Instrucciones:
-- Responde en español de forma natural, cálida y directa
-- Puedes responder CUALQUIER pregunta: ciencia, tecnología, finanzas, cocina, salud, historia, código, creatividad, etc.
-- Cuando el usuario mencione su nombre u otros datos importantes (ciudad, trabajo, gustos, familia), agrégalos al final de tu respuesta así: [MEMO:nombre=Julian] o [MEMO:ciudad=Bogotá] — estas etiquetas son procesadas automáticamente y NO se muestran al usuario
-- Si ya sabes el nombre del usuario, úsalo con naturalidad
-- Tu nombre es Lumi (si te preguntan)
-- Formatea con markdown básico cuando ayude (listas con -, negrita con **)${nombre ? `\n- El nombre del usuario es ${nombre}` : ''}
+## Cómo soy:
+- Hablo en español de Colombia, de forma natural, cercana y directa — como una amiga muy lista
+- Puedo ayudar con CUALQUIER tema: finanzas del hogar, recetas, salud, tecnología, historia, deportes, código, consejos de vida y mucho más
+- Cuando no tengo datos en tiempo real (resultados deportivos, noticias del día, precios actuales), lo digo brevemente con una sola frase y **de inmediato** ofrezco lo que sí puedo dar: contexto, historia, análisis, predicciones o la mejor fuente para consultar — sin largas explicaciones ni listas de advertencias
+- Nunca soy fría ni corporativa; si hay algo que no sé, lo reconozco con naturalidad y redirezco a algo útil o entretenido
+- Uso **negritas** y listas con - cuando hace el texto más claro, no para rellenar
+- Cuando el usuario mencione su nombre, ciudad, trabajo, gustos o familia, guárdalos así al final (invisible para el usuario): [MEMO:clave=valor] — ejemplo: [MEMO:nombre=Julián] [MEMO:equipo_favorito=Real Madrid]${nombre ? `\n- El nombre del usuario es **${nombre}** — úsalo con cariño pero sin exagerar` : ''}
 
-Sé útil, precisa y amable. Aprende de cada conversación.`
+Sé concisa, útil y cálida. Una respuesta corta y acertada vale más que tres párrafos genéricos.`
 }
 
 /* ── Extracción de memorias ──────────────────────── */
@@ -50,8 +45,8 @@ function parseMemos(text) {
 function saludar(nombre) {
   const h = new Date().getHours()
   const s = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches'
-  if (nombre) return `${s}, **${nombre}** ✦\n\nSoy **Lumi**, tu asistente personal. ¿En qué te puedo ayudar hoy?`
-  return `¡Hola! Soy **Lumi**, tu asistente de IA personal ✦\n\nPuedo ayudarte con cualquier pregunta — finanzas, tecnología, recetas, consejos, código y mucho más.\n\n¿Cómo te llamas?`
+  if (nombre) return `${s}, **${nombre}** ✦\n\nSoy **Lumi**, tu asistente personal. Cuéntame, ¿en qué te puedo ayudar hoy?`
+  return `¡Hola! Soy **Lumi** ✦\n\nTu asistente personal — lista para ayudarte con lo que necesites: finanzas, recetas, consejos, deportes, tecnología, ideas... lo que sea.\n\n¿Cómo te llamas?`
 }
 
 /* ── Renderizado de texto con markdown básico ────── */
@@ -100,9 +95,15 @@ function TypingDots() {
 }
 
 /* ── Panel de memoria ────────────────────────────── */
-function MemoriaPanel({ memoria, nombre, onBorrarFact, onBorrarTodo }) {
+function MemoriaPanel({ memoria, nombre, onBorrarFact, onBorrarTodo, isMobile, onClose }) {
   return (
-    <div style={{
+    <div style={isMobile ? {
+      position: 'fixed', inset: 0, zIndex: 200,
+      background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(30px)',
+      WebkitBackdropFilter: 'blur(30px)',
+      overflowY: 'auto', padding: '16px',
+      animation: 'fadeUp 0.25s ease both',
+    } : {
       width: 270, flexShrink: 0,
       background: 'rgba(255,255,255,0.93)', backdropFilter: 'blur(30px)',
       WebkitBackdropFilter: 'blur(30px)',
@@ -111,6 +112,12 @@ function MemoriaPanel({ memoria, nombre, onBorrarFact, onBorrarTodo }) {
       animation: 'slideIn 0.25s ease both',
       boxShadow: '-8px 0 36px rgba(0,0,0,0.10)',
     }}>
+      {isMobile && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+          <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', fontFamily: "'Playfair Display', serif" }}>Memoria de Lumi</p>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: 'var(--text2)', padding: '2px 6px', lineHeight: 1 }}>✕</button>
+        </div>
+      )}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
         <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'linear-gradient(135deg,#A855F7,#6366F1)', boxShadow: '0 0 8px rgba(168,85,247,0.6)' }} />
         <p style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--text3)', letterSpacing: '1px', textTransform: 'uppercase' }}>
@@ -181,16 +188,31 @@ export default function Asistente() {
   const { perfil } = useAuth()
   const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY
 
-  const [nombre, setNombre]   = useState(getNombre)
-  const [memoria, setMemoria] = useState(getMemoria)
+  const uid = perfil?.id ?? 'anon'
+  const K = {
+    nombre: `lumi_n_${uid}`,
+    memoria: `lumi_m_${uid}`,
+    hist:    `lumi_h_${uid}`,
+  }
+
+  const [nombre, setNombre]   = useState(() => LS.get(K.nombre) || null)
+  const [memoria, setMemoria] = useState(() => LS.get(K.memoria) || [])
   const [mensajes, setMensajes] = useState(() => {
-    const hist = getHist()
-    return hist.length > 0 ? hist : [{ id: 0, rol: 'assistant', texto: saludar(getNombre()) }]
+    const hist = LS.get(K.hist) || []
+    const nom  = LS.get(K.nombre) || null
+    return hist.length > 0 ? hist : [{ id: 0, rol: 'assistant', texto: saludar(nom) }]
   })
   const [input, setInput]         = useState('')
   const [enviando, setEnviando]   = useState(false)
   const [showMem, setShowMem]     = useState(false)
   const [error, setError]         = useState(null)
+  const [isMobile, setIsMobile]   = useState(() => window.innerWidth < 768)
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   const bottomRef  = useRef(null)
   const textareaRef = useRef(null)
@@ -335,11 +357,11 @@ export default function Asistente() {
   const lastId = mensajes[mensajes.length - 1]?.id
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 62px)', overflow: 'hidden', position: 'relative' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', position: 'relative' }}>
 
       {/* ── Cabecera ── */}
       <div style={{
-        flexShrink: 0, padding: '14px 24px',
+        flexShrink: 0, padding: isMobile ? '10px 14px' : '14px 24px',
         background: 'rgba(22,6,58,0.55)', backdropFilter: 'blur(32px)', WebkitBackdropFilter: 'blur(32px)',
         borderBottom: '1px solid rgba(255,255,255,0.10)',
         display: 'flex', alignItems: 'center', gap: 14,
@@ -361,7 +383,7 @@ export default function Asistente() {
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ADE80', boxShadow: '0 0 9px rgba(74,222,128,0.75)', animation: 'sidebarGlow 2s ease-in-out infinite' }} />
           </div>
           <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.48)', fontWeight: 500, marginTop: 1 }}>
-            Asistente de IA · aprende con cada conversación
+            Tu asistente personal · siempre lista para ayudarte
           </p>
         </div>
 
@@ -387,7 +409,7 @@ export default function Asistente() {
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex' }}>
 
         {/* Área de mensajes */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '22px 28px 16px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '14px 10px 10px' : '22px 28px 16px', display: 'flex', flexDirection: 'column', gap: 2 }}>
 
           {mensajes.map(msg => {
             const isUser     = msg.rol === 'user'
@@ -419,7 +441,7 @@ export default function Asistente() {
 
                 {/* Burbuja de mensaje */}
                 <div style={{
-                  maxWidth: 'min(68%, 640px)',
+                  maxWidth: isMobile ? '84%' : 'min(68%, 640px)',
                   padding: '11px 16px',
                   borderRadius: isUser ? '20px 20px 5px 20px' : '5px 20px 20px 20px',
                   background: isUser
@@ -453,6 +475,8 @@ export default function Asistente() {
             nombre={nombre}
             onBorrarFact={borrarFact}
             onBorrarTodo={borrarTodo}
+            isMobile={isMobile}
+            onClose={() => setShowMem(false)}
           />
         )}
       </div>
@@ -472,7 +496,9 @@ export default function Asistente() {
 
       {/* ── Input ── */}
       <div style={{
-        flexShrink: 0, padding: '14px 20px',
+        flexShrink: 0,
+        padding: isMobile ? '10px 12px' : '14px 20px',
+        paddingBottom: isMobile ? 'max(10px, env(safe-area-inset-bottom))' : '14px',
         background: 'rgba(22,6,58,0.45)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
         borderTop: '1px solid rgba(255,255,255,0.10)',
         display: 'flex', gap: 10, alignItems: 'flex-end',
@@ -485,7 +511,7 @@ export default function Asistente() {
           onInput={e => { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px' }}
           onFocus={e => { e.target.style.borderColor = 'rgba(255,107,157,0.60)'; e.target.style.boxShadow = '0 0 0 3px rgba(255,107,157,0.12)' }}
           onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.20)'; e.target.style.boxShadow = 'none' }}
-          placeholder="Escríbele a Lumi... (Enter = enviar · Shift+Enter = nueva línea)"
+          placeholder={isMobile ? "Escríbele a Lumi…" : "Escríbele a Lumi… (Enter para enviar · Shift+Enter = nueva línea)"}
           disabled={enviando}
           rows={1}
           style={{
@@ -504,25 +530,38 @@ export default function Asistente() {
           onClick={enviar}
           disabled={!input.trim() || enviando}
           style={{
-            width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
+            width: 46, height: 46, borderRadius: '50%', flexShrink: 0,
             background: !input.trim() || enviando
               ? 'rgba(255,255,255,0.10)'
-              : 'linear-gradient(135deg,#FF6B9D,#C026D3)',
-            border: 'none',
+              : 'linear-gradient(135deg,#FF6B9D 0%,#C026D3 55%,#7C3AED 100%)',
+            border: !input.trim() || enviando ? '1.5px solid rgba(255,255,255,0.12)' : '1.5px solid rgba(255,255,255,0.25)',
             cursor: !input.trim() || enviando ? 'not-allowed' : 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'white', fontSize: 19,
-            boxShadow: !input.trim() || enviando ? 'none' : '0 4px 20px rgba(255,107,157,0.50)',
-            transition: 'all 0.2s',
-            fontFamily: 'var(--font)',
+            color: 'white',
+            boxShadow: !input.trim() || enviando
+              ? 'none'
+              : '0 4px 22px rgba(255,107,157,0.55), 0 0 0 0 rgba(255,107,157,0)',
+            transition: 'all 0.22s cubic-bezier(0.22,1,0.36,1)',
+            position: 'relative', overflow: 'hidden',
           }}
-          onMouseEnter={e => { if (input.trim() && !enviando) { e.currentTarget.style.transform = 'scale(1.10)'; e.currentTarget.style.boxShadow = '0 6px 28px rgba(255,107,157,0.65)' } }}
-          onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = !input.trim() || enviando ? 'none' : '0 4px 20px rgba(255,107,157,0.50)' }}
+          onMouseEnter={e => {
+            if (input.trim() && !enviando) {
+              e.currentTarget.style.transform = 'scale(1.12) rotate(-8deg)'
+              e.currentTarget.style.boxShadow = '0 8px 32px rgba(255,107,157,0.70), 0 0 0 4px rgba(255,107,157,0.18)'
+            }
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.transform = 'scale(1) rotate(0deg)'
+            e.currentTarget.style.boxShadow = !input.trim() || enviando ? 'none' : '0 4px 22px rgba(255,107,157,0.55)'
+          }}
         >
-          {enviando
-            ? <div style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-            : '↑'
-          }
+          {enviando ? (
+            <div style={{ width: 18, height: 18, border: '2.5px solid rgba(255,255,255,0.28)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+          ) : (
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: 2, marginBottom: 1 }}>
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+            </svg>
+          )}
         </button>
       </div>
     </div>

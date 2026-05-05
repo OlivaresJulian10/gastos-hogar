@@ -14,6 +14,7 @@ import Personas from './pages/Personas'
 import OlvidePassword from './pages/OlvidePassword'
 import ResetPassword from './pages/ResetPassword'
 import Perfil from './pages/Perfil'
+import Asistente from './pages/Asistente'
 export default function App() {
   const { user, loading } = useAuth()
 
@@ -41,6 +42,7 @@ export default function App() {
                 <Route path="/presupuesto" element={<Presupuesto />} />
                 <Route path="/mi-presupuesto" element={<PresupuestoPersonal />} />
                 <Route path="/personas" element={<Personas />} />
+                <Route path="/asistente" element={<Asistente />} />
                 <Route path="/perfil" element={<Perfil />} />
               </Routes>
             </Layout>
