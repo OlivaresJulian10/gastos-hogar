@@ -12,7 +12,6 @@ const navItems = [
   { to: '/presupuesto',    icon: '◐',  label: 'Presupuesto hogar' },
   { to: '/mi-presupuesto', icon: '◆',  label: 'Mi presupuesto' },
   { to: '/personas',       icon: '◉',  label: 'Personas' },
-  { to: '/asistente',      icon: '✦',  label: 'Asistente IA' },
   { to: '/perfil',         icon: '⊙',  label: 'Perfil' },
 ]
 
@@ -25,7 +24,6 @@ const PAGE_TITLES = {
   '/presupuesto':    'Presupuesto del hogar',
   '/mi-presupuesto': 'Mi presupuesto',
   '/personas':       'Personas',
-  '/asistente':      'Asistente IA',
   '/perfil':         'Mi perfil',
 }
 

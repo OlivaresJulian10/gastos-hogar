@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#13022E"/>
+      <stop offset="100%" stop-color="#3B0E72"/>
+    </linearGradient>
+    <linearGradient id="star" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF6B9D"/>
+      <stop offset="50%" stop-color="#C026D3"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <!-- Estrella principal -->
+  <path d="M32 8 L34.8 24.2 L50 27 L34.8 29.8 L32 46 L29.2 29.8 L14 27 L29.2 24.2 Z"
+        fill="url(#star)" filter="url(#glow)"/>
+  <!-- Destellos pequeños -->
+  <circle cx="50" cy="14" r="2.8" fill="#FF6B9D" opacity="0.85"/>
+  <circle cx="13" cy="48" r="2" fill="#A855F7" opacity="0.70"/>
+  <circle cx="51" cy="46" r="2.3" fill="#C026D3" opacity="0.75"/>
+</svg>

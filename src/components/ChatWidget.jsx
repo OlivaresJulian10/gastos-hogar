@@ -319,12 +319,17 @@ export default function ChatWidget() {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <div style={{
-              width: 28, height: 28, borderRadius: '50%',
+              width: 30, height: 30, borderRadius: '50%',
               background: 'linear-gradient(135deg,#FF6B9D,#C026D3)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 12, color: 'white', fontWeight: 800, flexShrink: 0,
-              boxShadow: '0 2px 10px rgba(255,107,157,0.4)',
-            }}>✦</div>
+              flexShrink: 0, boxShadow: '0 2px 10px rgba(255,107,157,0.4)',
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
+                <path d="M12 2L13.2 8.8H19.5L14.2 12.5L16.4 19L12 15.5L7.6 19L9.8 12.5L4.5 8.8H10.8Z"/>
+                <circle cx="20" cy="4.5" r="1.5" opacity="0.80"/>
+                <circle cx="21" cy="17" r="1.1" opacity="0.65"/>
+              </svg>
+            </div>
             <div>
               <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)' }}>Lumi</span>
               <div style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#4ADE80', marginLeft: 5, boxShadow: '0 0 6px rgba(74,222,128,0.7)', verticalAlign: 'middle' }} />
@@ -361,13 +366,19 @@ export default function ChatWidget() {
             background: 'rgba(255,255,255,0.03)',
           }}>
             <div style={{
-              width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
+              width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
               background: 'linear-gradient(135deg,#FF6B9D,#C026D3,#6366F1)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 16, color: 'white',
-              boxShadow: '0 3px 18px rgba(255,107,157,0.50)',
+              boxShadow: '0 3px 20px rgba(255,107,157,0.55)',
               animation: 'sidebarGlow 3s ease-in-out infinite',
-            }}>✦</div>
+            }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+                <path d="M12 2L13.2 8.8H19.5L14.2 12.5L16.4 19L12 15.5L7.6 19L9.8 12.5L4.5 8.8H10.8Z"/>
+                <circle cx="20" cy="4.5" r="1.3" opacity="0.80"/>
+                <circle cx="3.5" cy="18" r="0.9" opacity="0.60"/>
+                <circle cx="21" cy="17" r="1.0" opacity="0.70"/>
+              </svg>
+            </div>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ fontSize: 15, fontWeight: 800, color: 'white', fontFamily: "'Playfair Display', serif", letterSpacing: '-0.2px' }}>Lumi</span>
@@ -476,7 +487,11 @@ export default function ChatWidget() {
                     fontSize: 9, color: 'white', fontWeight: 800, marginBottom: 1,
                     boxShadow: isUser ? '0 2px 8px rgba(20,184,166,0.38)' : '0 2px 8px rgba(255,107,157,0.38)',
                   }}>
-                    {isUser ? (nombre || perfil?.nombre || 'Tú').slice(0,1).toUpperCase() : '✦'}
+                    {isUser ? (nombre || perfil?.nombre || 'Tú').slice(0,1).toUpperCase() : (
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="white">
+                        <path d="M12 2L13.2 8.8H19.5L14.2 12.5L16.4 19L12 15.5L7.6 19L9.8 12.5L4.5 8.8H10.8Z"/>
+                      </svg>
+                    )}
                   </div>
                   <div style={{
                     maxWidth: '80%', padding: '9px 12px',
