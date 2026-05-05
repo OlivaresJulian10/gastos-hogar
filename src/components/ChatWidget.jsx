@@ -7,29 +7,26 @@ const LS = {
   set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
   del: k => localStorage.removeItem(k),
 }
-const K = { nombre: 'lumi_nombre', memoria: 'lumi_memoria', hist: 'lumi_hist' }
 const MAX_HIST = 40
-
-const getNombre  = () => LS.get(K.nombre) || null
-const getMemoria = () => LS.get(K.memoria) || []
-const getHist    = () => LS.get(K.hist) || []
 
 /* ── System prompt ───────────────────────────── */
 function buildSystem(nombre, memoria) {
   const memStr = memoria.length
     ? memoria.map(m => `• ${m.clave}: ${m.valor}`).join('\n')
     : '(sin datos aún)'
-  return `Eres Lumi, una asistente de IA inteligente y versátil${nombre ? ` de ${nombre}` : ''}.
+  return `Eres Lumi, una asistente de IA cálida, inteligente y versátil${nombre ? ` — la asistente personal de ${nombre}` : ''}.
 
-## Memoria:
+## Lo que recuerdo del usuario:
 ${memStr}
 
-## Instrucciones:
-- Responde en español de forma natural, cálida y directa
-- Puedes responder CUALQUIER pregunta: tecnología, finanzas, cocina, salud, código, creatividad, etc.
-- Si aprendes datos importantes del usuario (nombre, ciudad, trabajo, gustos), añade [MEMO:clave=valor] al final
-- Tu nombre es Lumi${nombre ? `\n- El nombre del usuario es ${nombre}` : ''}
-- Respuestas concisas en el widget — si necesitas dar mucho detalle, avisa que puedes profundizar`
+## Cómo soy:
+- Hablo en español de Colombia, de forma natural y cercana — como una amiga muy lista
+- Puedo ayudar con CUALQUIER tema: finanzas del hogar, recetas, salud, tecnología, historia, deportes, código, consejos y más
+- Cuando no tengo datos en tiempo real (resultados deportivos, noticias del día), lo digo en una sola frase y ofrezco lo que sí puedo dar: contexto, análisis o la mejor fuente
+- Soy concisa en el widget — respuestas directas y útiles, sin relleno
+- Si aprendes datos del usuario (nombre, ciudad, trabajo, gustos, familia), guárdalos así al final: [MEMO:clave=valor]${nombre ? `\n- El nombre del usuario es **${nombre}** — úsalo con cariño pero sin exagerar` : ''}
+
+Una respuesta corta y acertada vale más que tres párrafos genéricos.`
 }
 
 function parseMemos(text) {
@@ -102,15 +99,23 @@ export default function ChatWidget() {
   const { perfil, user } = useAuth()
   const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY
 
+  const uid = perfil?.id ?? 'anon'
+  const K = {
+    nombre: `lumi_n_${uid}`,
+    memoria: `lumi_m_${uid}`,
+    hist:    `lumi_h_${uid}`,
+  }
+
   const [open, setOpen]         = useState(false)
   const [showBubble, setShowBubble] = useState(false)
   const [showMem, setShowMem]   = useState(false)
   const [unread, setUnread]     = useState(false)
-  const [nombre, setNombre]     = useState(getNombre)
-  const [memoria, setMemoria]   = useState(getMemoria)
+  const [nombre, setNombre]     = useState(() => LS.get(K.nombre) || null)
+  const [memoria, setMemoria]   = useState(() => LS.get(K.memoria) || [])
   const [mensajes, setMensajes] = useState(() => {
-    const hist = getHist()
-    return hist.length > 0 ? hist : [{ id: 0, rol: 'assistant', texto: saludar(getNombre()) }]
+    const hist = LS.get(K.hist) || []
+    const nom  = LS.get(K.nombre) || null
+    return hist.length > 0 ? hist : [{ id: 0, rol: 'assistant', texto: saludar(nom) }]
   })
   const [input, setInput]       = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -527,19 +532,19 @@ export default function ChatWidget() {
               width: 38, height: 38, borderRadius: '50%', flexShrink: 0, border: 'none',
               background: !input.trim() || enviando
                 ? 'rgba(255,255,255,0.07)'
-                : 'linear-gradient(135deg,#FF6B9D,#C026D3)',
+                : 'linear-gradient(135deg,#FF6B9D,#C026D3,#7C3AED)',
               cursor: !input.trim() || enviando ? 'not-allowed' : 'pointer',
-              color: 'white', fontSize: 16,
+              color: 'white',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: !input.trim() || enviando ? 'none' : '0 4px 16px rgba(255,107,157,0.48)',
-              transition: 'all 0.2s',
+              boxShadow: !input.trim() || enviando ? 'none' : '0 4px 16px rgba(255,107,157,0.52)',
+              transition: 'all 0.22s cubic-bezier(0.22,1,0.36,1)',
             }}
-              onMouseEnter={e => { if (input.trim() && !enviando) e.currentTarget.style.transform = 'scale(1.08)' }}
-              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+              onMouseEnter={e => { if (input.trim() && !enviando) { e.currentTarget.style.transform = 'scale(1.12) rotate(-8deg)'; e.currentTarget.style.boxShadow = '0 6px 22px rgba(255,107,157,0.70)' } }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1) rotate(0deg)'; e.currentTarget.style.boxShadow = !input.trim() || enviando ? 'none' : '0 4px 16px rgba(255,107,157,0.52)' }}
             >
               {enviando
                 ? <div style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.25)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-                : '↑'
+                : <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: 2, marginBottom: 1 }}><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
               }
             </button>
           </div>
