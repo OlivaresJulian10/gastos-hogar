@@ -119,6 +119,7 @@ export default function ChatWidget() {
   })
   const [input, setInput]       = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [buscando, setBuscando] = useState(false)
   const [error, setError]       = useState(null)
 
   const bottomRef   = useRef(null)
@@ -204,11 +205,12 @@ export default function ChatWidget() {
           'anthropic-dangerous-direct-browser-access': 'true',
         },
         body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 1024,
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1500,
           stream: true,
           system: buildSystem(nombre, memoria),
           messages: apiMsgs,
+          tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 5 }],
         }),
       })
 
@@ -228,7 +230,12 @@ export default function ChatWidget() {
           if (!line.startsWith('data: ')) continue
           try {
             const ev = JSON.parse(line.slice(6))
+            if (ev.type === 'content_block_start') {
+              if (ev.content_block?.type === 'tool_use') setBuscando(true)
+              else if (ev.content_block?.type === 'text' && full === '') setBuscando(false)
+            }
             if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') {
+              setBuscando(false)
               full += ev.delta.text
               setMensajes(prev => {
                 const u = [...prev]
@@ -258,6 +265,7 @@ export default function ChatWidget() {
       setMensajes(prev => prev.filter(m => m.id !== asstId))
     } finally {
       setEnviando(false)
+      setBuscando(false)
       setTimeout(() => inputRef.current?.focus(), 50)
     }
   }
@@ -481,7 +489,14 @@ export default function ChatWidget() {
                     fontSize: 13, lineHeight: 1.6,
                     boxShadow: isUser ? '0 3px 14px rgba(255,107,157,0.38)' : 'none',
                   }}>
-                    {isStreaming && !msg.texto ? <TypingDots /> : <TextRender text={msg.texto} />}
+                    {isStreaming && buscando ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,0.55)', fontSize: 11.5, fontWeight: 500 }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ animation: 'spin 1s linear infinite', flexShrink: 0 }}>
+                          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                        Buscando en internet…
+                      </div>
+                    ) : isStreaming && !msg.texto ? <TypingDots /> : <TextRender text={msg.texto} />}
                   </div>
                 </div>
               )
@@ -551,48 +566,97 @@ export default function ChatWidget() {
         </div>
       )}
 
+      {/* ── Halo de brillo detrás del botón ── */}
+      {!open && (
+        <div style={{
+          position: 'fixed', bottom: 13, right: 13, zIndex: 9995,
+          width: 92, height: 92, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(255,107,157,0.50) 0%, rgba(168,85,247,0.28) 45%, transparent 72%)',
+          animation: 'sidebarGlow 2.8s ease-in-out infinite',
+          pointerEvents: 'none', filter: 'blur(10px)',
+        }} />
+      )}
+
+      {/* Anillo giratorio decorativo */}
+      {!open && (
+        <div style={{
+          position: 'fixed', bottom: 20, right: 20, zIndex: 9996,
+          width: 68, height: 68, borderRadius: '50%',
+          border: '1.5px solid transparent',
+          backgroundImage: 'conic-gradient(from 0deg, rgba(255,107,157,0.7), rgba(192,38,211,0.5), rgba(99,102,241,0.7), rgba(255,107,157,0.1), rgba(255,107,157,0.7))',
+          backgroundOrigin: 'border-box',
+          WebkitMask: 'linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)',
+          WebkitMaskComposite: 'destination-out',
+          maskComposite: 'exclude',
+          animation: 'spin 4s linear infinite',
+          pointerEvents: 'none',
+        }} />
+      )}
+
       {/* ── Botón flotante ── */}
       <button
         onClick={() => { setOpen(v => !v); setShowBubble(false); setUnread(false) }}
         style={{
           position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
-          width: 58, height: 58, borderRadius: '50%', border: 'none',
+          width: 60, height: 60, borderRadius: '50%',
+          border: '1.5px solid rgba(255,255,255,0.30)',
           background: open
             ? 'linear-gradient(135deg,#6366F1,#A855F7)'
-            : 'linear-gradient(135deg,#FF6B9D 0%,#C026D3 50%,#A855F7 100%)',
+            : 'linear-gradient(135deg,#FF6B9D 0%,#C026D3 55%,#7C3AED 100%)',
           cursor: 'pointer', color: 'white',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 8px 32px rgba(255,107,157,0.55), 0 2px 8px rgba(0,0,0,0.28)',
-          transition: 'all 0.28s cubic-bezier(0.34,1.56,0.64,1)',
-          transform: open ? 'scale(0.92)' : 'scale(1)',
+          boxShadow: open
+            ? '0 4px 24px rgba(99,102,241,0.50)'
+            : '0 10px 44px rgba(255,107,157,0.70), 0 4px 16px rgba(124,58,237,0.40), 0 2px 6px rgba(0,0,0,0.22)',
+          transition: 'all 0.32s cubic-bezier(0.34,1.56,0.64,1)',
+          transform: open ? 'scale(0.90) rotate(135deg)' : 'scale(1)',
+          animation: !open ? 'floatBtn 3.5s ease-in-out infinite' : 'none',
         }}
-        onMouseEnter={e => { if (!open) e.currentTarget.style.transform = 'scale(1.13)' }}
-        onMouseLeave={e => { e.currentTarget.style.transform = open ? 'scale(0.92)' : 'scale(1)' }}
+        onMouseEnter={e => { if (!open) { e.currentTarget.style.transform = 'scale(1.14)'; e.currentTarget.style.boxShadow = '0 14px 52px rgba(255,107,157,0.85), 0 6px 20px rgba(124,58,237,0.55)' } }}
+        onMouseLeave={e => { e.currentTarget.style.transform = open ? 'scale(0.90) rotate(135deg)' : 'scale(1)'; e.currentTarget.style.boxShadow = open ? '0 4px 24px rgba(99,102,241,0.50)' : '0 10px 44px rgba(255,107,157,0.70), 0 4px 16px rgba(124,58,237,0.40)' }}
       >
-        <span style={{ fontSize: open ? 20 : 22, transition: 'all 0.2s' }}>
-          {open ? '✕' : '✦'}
-        </span>
+        {open ? (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        ) : (
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L13.2 8.8H19.5L14.2 12.5L16.4 19L12 15.5L7.6 19L9.8 12.5L4.5 8.8H10.8Z"/>
+            <circle cx="19.5" cy="4.5" r="1.4" opacity="0.80"/>
+            <circle cx="4" cy="18.5" r="1.0" opacity="0.55"/>
+            <circle cx="20.5" cy="17" r="1.1" opacity="0.65"/>
+          </svg>
+        )}
 
-        {/* Badge de no leído */}
+        {/* Badge no leído */}
         {unread && !open && (
           <div style={{
-            position: 'absolute', top: 5, right: 5,
-            width: 11, height: 11, borderRadius: '50%',
-            background: '#4ADE80', border: '2px solid rgba(10,3,28,0.9)',
-            boxShadow: '0 0 8px rgba(74,222,128,0.8)',
+            position: 'absolute', top: 4, right: 4,
+            width: 12, height: 12, borderRadius: '50%',
+            background: '#4ADE80', border: '2px solid #1a0a3a',
+            boxShadow: '0 0 10px rgba(74,222,128,0.85)',
           }} />
         )}
       </button>
 
-      {/* Ring pulsante cuando hay no leído */}
+      {/* Rings pulsantes cuando hay no leído */}
       {unread && !open && (
-        <div style={{
-          position: 'fixed', bottom: 24, right: 24, zIndex: 9997,
-          width: 58, height: 58, borderRadius: '50%',
-          border: '2px solid rgba(255,107,157,0.45)',
-          animation: 'pulseRing 1.8s ease-out infinite',
-          pointerEvents: 'none',
-        }} />
+        <>
+          <div style={{
+            position: 'fixed', bottom: 24, right: 24, zIndex: 9997,
+            width: 60, height: 60, borderRadius: '50%',
+            border: '2px solid rgba(255,107,157,0.55)',
+            animation: 'pulseRing 1.8s ease-out infinite',
+            pointerEvents: 'none',
+          }} />
+          <div style={{
+            position: 'fixed', bottom: 24, right: 24, zIndex: 9996,
+            width: 60, height: 60, borderRadius: '50%',
+            border: '2px solid rgba(168,85,247,0.40)',
+            animation: 'pulseRing 1.8s ease-out 0.5s infinite',
+            pointerEvents: 'none',
+          }} />
+        </>
       )}
     </>
   )
