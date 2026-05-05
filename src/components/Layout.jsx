@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import ChatWidget from './ChatWidget'
 
 const navItems = [
   { to: '/',               icon: '⬡',  label: 'Dashboard' },
@@ -12,7 +13,6 @@ const navItems = [
   { to: '/mi-presupuesto', icon: '◆',  label: 'Mi presupuesto' },
   { to: '/personas',       icon: '◉',  label: 'Personas' },
   { to: '/perfil',         icon: '⊙',  label: 'Perfil' },
-  { to: '/asistente',      icon: '✦',  label: 'Asistente IA' },
 ]
 
 const PAGE_TITLES = {
@@ -25,7 +25,6 @@ const PAGE_TITLES = {
   '/mi-presupuesto': 'Mi presupuesto',
   '/personas':       'Personas',
   '/perfil':         'Mi perfil',
-  '/asistente':      'Asistente IA',
 }
 
 function AvatarCircle({ perfil, size = 36, fontSize = 13 }) {
@@ -336,6 +335,7 @@ export default function Layout({ children }) {
           <div className="page-enter">{children}</div>
         </main>
       </div>
+      <ChatWidget />
     </div>
   )
 }
