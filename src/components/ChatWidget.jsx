@@ -14,19 +14,19 @@ function buildSystem(nombre, memoria) {
   const memStr = memoria.length
     ? memoria.map(m => `• ${m.clave}: ${m.valor}`).join('\n')
     : '(sin datos aún)'
-  return `Eres Lumi, una asistente de IA cálida, inteligente y versátil${nombre ? ` — la asistente personal de ${nombre}` : ''}.
+  return `Eres Lumi, la asistente personal de IA de${nombre ? ` **${nombre}**` : 'l usuario'} — inteligente, cálida y siempre actualizada.
 
-## Lo que recuerdo del usuario:
+## Lo que recuerdo:
 ${memStr}
 
-## Cómo soy:
-- Hablo en español de Colombia, de forma natural y cercana — como una amiga muy lista
-- Puedo ayudar con CUALQUIER tema: finanzas del hogar, recetas, salud, tecnología, historia, deportes, código, consejos y más
-- Cuando no tengo datos en tiempo real (resultados deportivos, noticias del día), lo digo en una sola frase y ofrezco lo que sí puedo dar: contexto, análisis o la mejor fuente
-- Soy concisa en el widget — respuestas directas y útiles, sin relleno
-- Si aprendes datos del usuario (nombre, ciudad, trabajo, gustos, familia), guárdalos así al final: [MEMO:clave=valor]${nombre ? `\n- El nombre del usuario es **${nombre}** — úsalo con cariño pero sin exagerar` : ''}
+## Reglas de oro:
+1. **SIEMPRE usa web_search** para: partidos, marcadores, noticias, precios, clima, estrenos, resultados, eventos — cualquier cosa que pueda cambiar día a día. No especules, busca primero.
+2. Habla en español de Colombia, natural y cercano — como una amiga muy inteligente.
+3. Da la respuesta **completa y útil**: si alguien pregunta por partidos, muestra fecha, hora, equipos y canal. Si pregunta por marcador, da el resultado. No digas "no tengo esa información" si puedes buscarla.
+4. Después de buscar, presenta los datos de forma clara con negritas y listas cuando ayude.
+5. Si aprendes datos del usuario (ciudad, trabajo, gustos, familia), guárdalos: [MEMO:clave=valor]${nombre ? `\n6. Siempre llama al usuario **${nombre}** — con cariño, no en cada frase.` : ''}
 
-Una respuesta corta y acertada vale más que tres párrafos genéricos.`
+Sé directa, precisa y útil. El usuario espera respuestas reales, no evasivas.`
 }
 
 function parseMemos(text) {
@@ -103,48 +103,64 @@ export default function ChatWidget() {
   const K = {
     nombre: `lumi_n_${uid}`,
     memoria: `lumi_m_${uid}`,
-    hist:    `lumi_h_${uid}`,
   }
 
-  const [open, setOpen]         = useState(false)
+  const [open, setOpen]             = useState(false)
   const [showBubble, setShowBubble] = useState(false)
-  const [showMem, setShowMem]   = useState(false)
-  const [unread, setUnread]     = useState(false)
-  const [nombre, setNombre]     = useState(() => LS.get(K.nombre) || null)
-  const [memoria, setMemoria]   = useState(() => LS.get(K.memoria) || [])
-  const [mensajes, setMensajes] = useState(() => {
-    const hist = LS.get(K.hist) || []
-    const nom  = LS.get(K.nombre) || null
-    return hist.length > 0 ? hist : [{ id: 0, rol: 'assistant', texto: saludar(nom) }]
-  })
-  const [input, setInput]       = useState('')
-  const [enviando, setEnviando] = useState(false)
-  const [buscando, setBuscando] = useState(false)
-  const [error, setError]       = useState(null)
+  const [showMem, setShowMem]       = useState(false)
+  const [unread, setUnread]         = useState(false)
+  const [nombre, setNombre]         = useState(null)
+  const [memoria, setMemoria]       = useState([])
+  const [mensajes, setMensajes]     = useState([{ id: 0, rol: 'assistant', texto: saludar(null) }])
+  const [input, setInput]           = useState('')
+  const [enviando, setEnviando]     = useState(false)
+  const [buscando, setBuscando]     = useState(false)
+  const [error, setError]           = useState(null)
 
   const bottomRef   = useRef(null)
   const inputRef    = useRef(null)
   const textareaRef = useRef(null)
   const idRef       = useRef(Date.now())
   const nextId      = () => ++idRef.current
+  const prevUidRef  = useRef('anon')
 
-  /* ── Limpiar flag al cerrar sesión ── */
+  /* ── Reaccionar a login / logout (uid cambia cuando perfil carga) ── */
   useEffect(() => {
-    if (!user) sessionStorage.removeItem('lumi_greeted')
-  }, [user])
+    if (prevUidRef.current === uid) return
+    prevUidRef.current = uid
 
-  /* ── Auto-saludo al iniciar sesión (una vez por sesión) ── */
-  useEffect(() => {
-    if (!user) return
-    if (sessionStorage.getItem('lumi_greeted')) return
+    if (uid === 'anon') {
+      // Logout: estado limpio
+      setNombre(null); setMemoria([])
+      setMensajes([{ id: nextId(), rol: 'assistant', texto: saludar(null) }])
+      setOpen(false); setShowBubble(false); setUnread(false)
+      return
+    }
+
+    // Login: cargar memoria persistente + nombre del perfil
+    const storedNombre = LS.get(K.nombre)
+    const profileName  = perfil?.nombre ? perfil.nombre.split(' ')[0] : null
+    const effectiveName = storedNombre || profileName
+
+    if (!storedNombre && profileName) LS.set(K.nombre, profileName)
+
+    const storedMem = LS.get(K.memoria) || []
+    const updatedMem = profileName && !storedMem.find(m => m.clave === 'nombre')
+      ? [{ clave: 'nombre', valor: profileName }, ...storedMem]
+      : storedMem
+    if (updatedMem !== storedMem) LS.set(K.memoria, updatedMem)
+
+    setNombre(effectiveName)
+    setMemoria(updatedMem)
+    setMensajes([{ id: nextId(), rol: 'assistant', texto: saludar(effectiveName) }])
+
+    // Mostrar burbuja de saludo
     const t = setTimeout(() => {
-      setShowBubble(true)
-      setUnread(true)
-      sessionStorage.setItem('lumi_greeted', '1')
-      setTimeout(() => setShowBubble(false), 7000)
-    }, 1800)
+      setShowBubble(true); setUnread(true)
+      setTimeout(() => setShowBubble(false), 8000)
+    }, 1600)
     return () => clearTimeout(t)
-  }, [user])
+  }, [uid])
 
   useEffect(() => {
     if (open) {
@@ -211,7 +227,7 @@ export default function ChatWidget() {
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
-          max_tokens: 1500,
+          max_tokens: 3000,
           stream: true,
           system: buildSystem(nombre, memoria),
           messages: apiMsgs,
@@ -263,7 +279,7 @@ export default function ChatWidget() {
         })
       }
 
-      LS.set(K.hist, [...cadena, { id: asstId, rol: 'assistant', texto: full }].slice(-MAX_HIST))
+      // No persiste historial — conversación siempre fresca al iniciar sesión
 
     } catch (e) {
       setError(e.message)
@@ -286,7 +302,7 @@ export default function ChatWidget() {
 
   const borrarTodo = () => {
     if (!confirm('¿Borrar memoria y conversación?')) return
-    LS.del(K.nombre); LS.del(K.memoria); LS.del(K.hist)
+    LS.del(K.nombre); LS.del(K.memoria)
     setNombre(null); setMemoria([])
     setMensajes([{ id: nextId(), rol: 'assistant', texto: saludar(null) }])
     setShowMem(false)
