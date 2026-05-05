@@ -128,6 +128,11 @@ export default function ChatWidget() {
   const idRef       = useRef(Date.now())
   const nextId      = () => ++idRef.current
 
+  /* ── Limpiar flag al cerrar sesión ── */
+  useEffect(() => {
+    if (!user) sessionStorage.removeItem('lumi_greeted')
+  }, [user])
+
   /* ── Auto-saludo al iniciar sesión (una vez por sesión) ── */
   useEffect(() => {
     if (!user) return
