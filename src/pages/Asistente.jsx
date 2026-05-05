@@ -434,7 +434,7 @@ export default function Asistente() {
                   boxShadow: isUser
                     ? '0 2px 10px rgba(20,184,166,0.42)'
                     : '0 2px 10px rgba(255,107,157,0.42)',
-                  marginBottom: 2, flexShrink: 0,
+                  marginBottom: 2,
                 }}>
                   {isUser ? (nombre || perfil?.nombre || 'Tú').slice(0, 1).toUpperCase() : '✦'}
                 </div>
