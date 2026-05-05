@@ -12,6 +12,7 @@ const navItems = [
   { to: '/mi-presupuesto', icon: '◆',  label: 'Mi presupuesto' },
   { to: '/personas',       icon: '◉',  label: 'Personas' },
   { to: '/perfil',         icon: '⊙',  label: 'Perfil' },
+  { to: '/asistente',      icon: '✦',  label: 'Asistente IA' },
 ]
 
 const PAGE_TITLES = {
@@ -24,6 +25,7 @@ const PAGE_TITLES = {
   '/mi-presupuesto': 'Mi presupuesto',
   '/personas':       'Personas',
   '/perfil':         'Mi perfil',
+  '/asistente':      'Asistente IA',
 }
 
 function AvatarCircle({ perfil, size = 36, fontSize = 13 }) {

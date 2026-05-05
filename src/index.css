@@ -132,6 +132,14 @@ input, select, textarea {
   from { left: -80%; }
   to   { left: 120%; }
 }
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30%           { transform: translateY(-7px); }
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(18px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
 @keyframes textGlow {
   0%, 100% { text-shadow: 0 0 30px rgba(255,107,157,0.45), 0 2px 20px rgba(0,0,0,0.12); }
   50%       { text-shadow: 0 0 70px rgba(255,107,157,0.80), 0 0 40px rgba(168,85,247,0.45), 0 2px 20px rgba(0,0,0,0.15); }
