@@ -80,10 +80,10 @@ export default function Login() {
       <div style={{ width: '100%', maxWidth: 440 }}>
 
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{ fontSize: 38, fontWeight: 700, fontFamily: "'Playfair Display',serif", background: 'linear-gradient(135deg,#1E0845,#A855F7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', marginBottom: 6 }}>
+          <div style={{ fontSize: 38, fontWeight: 700, fontFamily: "'Playfair Display',serif", background: 'linear-gradient(135deg,#FFFFFF,#F0BAFF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', marginBottom: 6, filter: 'drop-shadow(0 2px 12px rgba(255,255,255,0.4))' }}>
             Casa ✦
           </div>
-          <p style={{ fontSize: 13, color: '#7A5070', fontWeight: 500 }}>Control de gastos del hogar</p>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', fontWeight: 500 }}>Control de gastos del hogar</p>
         </div>
 
         <div style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(16px)', borderRadius: 24, padding: '2rem', boxShadow: '0 20px 60px rgba(168,85,247,0.18)', border: '1px solid rgba(210,100,160,0.15)' }}>
