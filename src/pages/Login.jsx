@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import ChatWidget from '../components/ChatWidget'
 
 const inp = {
   width: '100%', padding: '11px 14px', fontSize: 14, fontWeight: 500,
@@ -76,6 +77,7 @@ export default function Login() {
   )
 
   return (
+    <>
     <div className="page-root" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', fontFamily: 'Nunito, sans-serif' }}>
       <div style={{ width: '100%', maxWidth: 440 }}>
 
@@ -164,5 +166,7 @@ export default function Login() {
         </div>
       </div>
     </div>
+    <ChatWidget />
+    </>
   )
 }
