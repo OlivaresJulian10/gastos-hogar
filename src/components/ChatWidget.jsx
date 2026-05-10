@@ -124,6 +124,16 @@ export default function ChatWidget() {
   const nextId      = () => ++idRef.current
   const prevUidRef  = useRef('anon')
 
+  /* ── Saludo inicial cuando no hay sesión (ej: pantalla de login) ── */
+  useEffect(() => {
+    if (uid !== 'anon') return
+    const t = setTimeout(() => {
+      setShowBubble(true); setUnread(true)
+      setTimeout(() => setShowBubble(false), 8000)
+    }, 1600)
+    return () => clearTimeout(t)
+  }, [])
+
   /* ── Reaccionar a login / logout (uid cambia cuando perfil carga) ── */
   useEffect(() => {
     if (prevUidRef.current === uid) return
